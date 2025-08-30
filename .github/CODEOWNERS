@@ -2,43 +2,43 @@
 # https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
 
 # Global owners - will be requested for review on all PRs
-* @octocat
+* @Daisuke106
 
 # Backend specific
-*.php @octocat
-composer.json @octocat
-composer.lock @octocat
-app/ @octocat
-config/ @octocat
-database/ @octocat
-routes/ @octocat
+*.php @Daisuke106
+composer.json @Daisuke106
+composer.lock @Daisuke106
+app/ @Daisuke106
+config/ @Daisuke106
+database/ @Daisuke106
+routes/ @Daisuke106
 
 # Frontend specific  
-hns-frontend/ @octocat
-*.js @octocat
-*.jsx @octocat
-*.ts @octocat
-*.tsx @octocat
-package.json @octocat
-package-lock.json @octocat
+hns-frontend/ @Daisuke106
+*.js @Daisuke106
+*.jsx @Daisuke106
+*.ts @Daisuke106
+*.tsx @Daisuke106
+package.json @Daisuke106
+package-lock.json @Daisuke106
 
 # CI/CD and DevOps
-.github/ @octocat
-Dockerfile* @octocat
-docker-compose*.yml @octocat
-*.yml @octocat
-*.yaml @octocat
+.github/ @Daisuke106
+Dockerfile* @Daisuke106
+docker-compose*.yml @Daisuke106
+*.yml @Daisuke106
+*.yaml @Daisuke106
 
 # Security and configuration
-SECURITY.md @octocat
-.env.example @octocat
-phpstan.neon @octocat
-.eslintrc.json @octocat
+SECURITY.md @Daisuke106
+.env.example @Daisuke106
+phpstan.neon @Daisuke106
+.eslintrc.json @Daisuke106
 
 # Documentation
-docs/ @octocat
-*.md @octocat
+docs/ @Daisuke106
+*.md @Daisuke106
 
 # Root configuration files
-.gitignore @octocat
-.deployignore @octocat
+.gitignore @Daisuke106
+.deployignore @Daisuke106
