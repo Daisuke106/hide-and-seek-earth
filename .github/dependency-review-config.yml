@@ -1,0 +1,31 @@
+fail_on_severity: 'high'
+allow_licenses:
+  - 'MIT'
+  - 'Apache-2.0'
+  - 'BSD-2-Clause'
+  - 'BSD-3-Clause'
+  - 'BSD-3-Clause-Clear'
+  - 'ISC'
+  - 'GPL-3.0'
+  - 'GPL-2.0'
+  - 'LGPL-2.1'
+  - 'LGPL-3.0'
+  - 'MPL-2.0'
+  - 'CC0-1.0'
+
+# Limit the output size
+vulnerability_check: true
+license_check: true
+
+# Exclude known false positives or acceptable risks
+deny_licenses:
+  - 'AGPL-3.0'
+
+# Configure summary format
+summary_comment: true
+comment_summary_in_pr: false  # Disable PR comments to reduce size
+
+# Only check direct dependencies for moderate+ vulnerabilities
+deny_groups:
+  - security: 'moderate'
+    scope: 'runtime'

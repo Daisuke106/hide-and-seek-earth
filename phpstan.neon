@@ -1,0 +1,15 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    paths:
+        - app/
+
+    # Level of rule strictness (0-9) - start with lower level
+    level: 0
+
+    excludePaths: []
+
+    # Laravel specific configuration
+    bootstrapFiles:
+        - bootstrap/app.php

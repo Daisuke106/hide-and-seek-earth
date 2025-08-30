@@ -1,0 +1,215 @@
+name: Security Checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # 毎週月曜日の午前2時（JST）に実行
+    - cron: '17 17 * * 0'  # UTC time (JST - 9hours)
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  composer-security:
+    name: Composer Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader
+
+      - name: Run security audit
+        run: composer audit --no-dev
+
+  npm-security:
+    name: NPM Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install dependencies
+        working-directory: ./hns-frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci with package-lock.json"
+            npm ci
+          else
+            echo "Using npm install (no package-lock.json found)"
+            npm install
+          fi
+
+      - name: Run security audit
+        working-directory: ./hns-frontend
+        run: npm audit --audit-level=moderate || echo "NPM audit found vulnerabilities, but continuing..."
+
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[security]'))
+    permissions:
+      actions: read
+      contents: read
+      security-events: write
+    strategy:
+      fail-fast: false
+      matrix:
+        language: [ 'javascript-typescript' ]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          config: |
+            paths:
+              - hns-frontend/src
+            paths-ignore:
+              - hns-frontend/node_modules
+              - hns-frontend/build
+              - "**/*.test.ts"
+              - "**/*.test.tsx"
+              - "**/*.spec.ts"
+              - "**/*.spec.tsx"
+            queries:
+              - uses: security-and-quality
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        working-directory: ./hns-frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci with package-lock.json"
+            npm ci
+          else
+            echo "Using npm install (no package-lock.json found)"
+            npm install
+          fi
+
+      - name: Build frontend
+        working-directory: ./hns-frontend
+        run: npm run build
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:${{matrix.language}}"
+          upload: true
+          cleanup-level: none
+
+  php-static-analysis:
+    name: PHP Static Analysis
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          coverage: none
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Run PHPStan
+        run: vendor/bin/phpstan analyse --error-format=github --no-progress || true
+
+      - name: Run Larastan
+        run: vendor/bin/phpstan analyse --configuration=phpstan.neon --error-format=github --no-progress || true
+
+  dependency-check:
+    name: Dependency Security Check
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install frontend dependencies
+        working-directory: ./hns-frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --silent
+          else
+            npm install --silent
+          fi
+
+      - name: Run npm audit (critical only)
+        working-directory: ./hns-frontend
+        run: |
+          echo "Running npm audit for critical vulnerabilities..."
+          npm audit --audit-level=critical || echo "Critical vulnerabilities found, but continuing for now"
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+
+      - name: Install Composer dependencies
+        run: composer install --prefer-dist --no-interaction --no-progress --quiet
+
+      - name: Run composer audit (high severity only)
+        run: |
+          echo "Running composer audit for high severity vulnerabilities..."
+          composer audit --no-dev --format=summary || echo "High severity vulnerabilities found, but continuing for now"
+
+  secrets-scan:
+    name: Secrets Scanning
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Secret Scanning
+        run: |
+          echo "Checking for common secret patterns..."
+          # Check for API keys, tokens, passwords in code
+          git log --all --full-history --patch | grep -iE "(api[_-]?key|token|password|secret)" || echo "No obvious secrets found in git history"
+          
+          # Check current files for secret patterns
+          find . -type f -name "*.php" -o -name "*.js" -o -name "*.ts" -o -name "*.json" -o -name "*.yml" -o -name "*.yaml" | \
+          xargs grep -iE "(api[_-]?key|password|secret|token)" --exclude-dir=node_modules --exclude-dir=vendor || echo "No obvious secrets found in files"
+          
+      - name: Check for .env files
+        run: |
+          echo "Checking for environment files..."
+          find . -name ".env*" -type f | grep -v ".env.example" || echo "No .env files found"

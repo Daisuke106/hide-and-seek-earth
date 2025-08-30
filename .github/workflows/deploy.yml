@@ -1,0 +1,198 @@
+name: Deploy
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deployment environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - staging
+          - production
+
+env:
+  PHP_VERSION: '8.2'
+  NODE_VERSION: '22'
+
+jobs:
+  # Build artifacts
+  build:
+    name: Build Application
+    runs-on: ubuntu-latest
+    
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: |
+          if [[ $GITHUB_REF == refs/tags/* ]]; then
+            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+          else
+            echo "version=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Install backend dependencies
+        run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
+
+      - name: Install frontend dependencies
+        working-directory: ./hns-frontend
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci with package-lock.json"
+            npm ci
+          else
+            echo "Using npm install (no package-lock.json found)"
+            npm install
+          fi
+
+      - name: Build frontend
+        working-directory: ./hns-frontend
+        run: npm run build
+
+      - name: Create deployment archive
+        run: |
+          mkdir -p deploy
+          rsync -av --exclude-from=.deployignore . deploy/
+          cd deploy
+          tar -czf ../deployment-${{ steps.version.outputs.version }}.tar.gz .
+          
+      - name: Upload deployment artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: deployment-${{ steps.version.outputs.version }}
+          path: deployment-${{ steps.version.outputs.version }}.tar.gz
+          retention-days: 30
+
+  # Deploy to staging
+  deploy-staging:
+    name: Deploy to Staging
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.example.com
+      
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-${{ needs.build.outputs.version }}
+
+      - name: Deploy to staging server
+        run: |
+          echo "Deploying version ${{ needs.build.outputs.version }} to staging"
+          # ここに実際のデプロイメントコマンドを追加
+          # 例: scp, rsync, SSH commands, Docker deployment等
+
+      - name: Run database migrations
+        run: |
+          echo "Running database migrations on staging"
+          # 例: ssh staging "cd /var/www/app && php artisan migrate --force"
+
+      - name: Clear application cache
+        run: |
+          echo "Clearing application cache on staging"
+          # 例: ssh staging "cd /var/www/app && php artisan cache:clear"
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying staging deployment"
+          # ヘルスチェック等
+          # curl -f https://staging.example.com/health
+
+  # Deploy to production
+  deploy-production:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://production.example.com
+      
+    steps:
+      - name: Download deployment artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: deployment-${{ needs.build.outputs.version }}
+
+      - name: Create deployment backup
+        run: |
+          echo "Creating backup before production deployment"
+          # バックアップコマンドをここに追加
+
+      - name: Deploy to production server
+        run: |
+          echo "Deploying version ${{ needs.build.outputs.version }} to production"
+          # 本番環境へのデプロイメントコマンド
+
+      - name: Run database migrations
+        run: |
+          echo "Running database migrations on production"
+          # 本番環境でのマイグレーション実行
+
+      - name: Clear application cache
+        run: |
+          echo "Clearing application cache on production"
+          # 本番環境でのキャッシュクリア
+
+      - name: Verify deployment
+        run: |
+          echo "Verifying production deployment"
+          # 本番環境のヘルスチェック
+
+      - name: Notify deployment success
+        if: success()
+        run: |
+          echo "Production deployment successful"
+          # Slack/Discord/Email通知等
+
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          echo "Production deployment failed, initiating rollback"
+          # ロールバック処理
+
+  # Notify deployment status
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [build, deploy-staging, deploy-production]
+    if: always()
+    
+    steps:
+      - name: Notify success
+        if: needs.build.result == 'success' && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
+        run: |
+          echo "Deployment completed successfully"
+          # 成功通知
+
+      - name: Notify failure
+        if: needs.build.result == 'failure' || needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure'
+        run: |
+          echo "Deployment failed"
+          # 失敗通知
