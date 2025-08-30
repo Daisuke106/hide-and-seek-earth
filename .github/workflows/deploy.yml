@@ -98,7 +98,7 @@ jobs:
       
     steps:
       - name: Download deployment artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: deployment-${{ needs.build.outputs.version }}
 
@@ -136,7 +136,7 @@ jobs:
       
     steps:
       - name: Download deployment artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v5
         with:
           name: deployment-${{ needs.build.outputs.version }}
 
