@@ -87,9 +87,22 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
 
+      - name: Check package files
+        working-directory: ./hns-frontend
+        run: |
+          echo "Checking package files..."
+          ls -la package*.json || echo "No package files found"
+          
       - name: Install dependencies
         working-directory: ./hns-frontend
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci with package-lock.json"
+            npm ci
+          else
+            echo "Using npm install (no package-lock.json found)"
+            npm install
+          fi
 
       - name: Run ESLint
         working-directory: ./hns-frontend
@@ -194,7 +207,14 @@ jobs:
 
       - name: Install frontend dependencies
         working-directory: ./hns-frontend
-        run: npm ci
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using npm ci with package-lock.json"
+            npm ci
+          else
+            echo "Using npm install (no package-lock.json found)"
+            npm install
+          fi
 
       - name: Build frontend
         working-directory: ./hns-frontend

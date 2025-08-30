@@ -33,5 +33,4 @@ Thumbs.db
 /hns-frontend/npm-debug.log*
 /hns-frontend/yarn-debug.log*
 /hns-frontend/yarn-error.log*
-/hns-frontend/package-lock.json
 /hns-frontend/yarn.lock
