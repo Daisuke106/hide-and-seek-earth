@@ -1,61 +1,146 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# 地球全体でかくれんぼ 🌍
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+世界地図を舞台に、隠れたキャラクターを探すソーシャル探索ゲーム
 
-## About Laravel
+## 📖 プロジェクト概要
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+Google Map（または代替地図）を使って、全世界に隠されたオリジナルキャラクターを探す新感覚の地理探索ゲームです。プレイヤーには「発見の喜び」と「他者とのゆるやかな繋がり」を提供し、地理への興味を喚起することを目的としています。
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### コアコンセプト
+- 🗺️ **全世界が遊び場**: 地球全体のマップを自由に探索
+- 🔍 **発見の喜び**: 隠されたキャラクターを見つける楽しさ
+- 🌟 **カジュアル体験**: 誰でも気軽に楽しめるゲームプレイ
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### MVP範囲
+- ✅ シングルプレイヤーモードでの基本的な探索体験
+- ❌ オンライン対戦・協力モード（将来実装予定）
+- ❌ ユーザー認証・課金機能（将来実装予定）
 
-## Learning Laravel
+## 🏗️ 技術構成
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### フロントエンド
+- **フレームワーク**: React (TypeScript)
+- **地図ライブラリ**: Leaflet.js
+- **開発環境**: Create React App
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### バックエンド
+- **フレームワーク**: Laravel (PHP)
+- **データベース**: MySQL / PostgreSQL
+- **API**: RESTful API
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### インフラ
+- **開発環境**: Docker
+- **本番環境**: Heroku / AWS（予定）
 
-## Laravel Sponsors
+## 🚀 セットアップ手順
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### 前提条件
+- Node.js 16.x 以上
+- PHP 8.1 以上
+- Composer
+- Docker（推奨）
 
-### Premium Partners
+### 1. リポジトリのクローン
+```bash
+git clone https://github.com/yourusername/hns-backend.git
+cd hns-backend
+```
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### 2. バックエンドのセットアップ
+```bash
+# 依存関係のインストール
+composer install
 
-## Contributing
+# 環境設定ファイルの作成
+cp .env.example .env
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+# アプリケーションキーの生成
+php artisan key:generate
 
-## Code of Conduct
+# データベースマイグレーション
+php artisan migrate
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+# 開発サーバーの起動
+php artisan serve
+```
 
-## Security Vulnerabilities
+### 3. フロントエンドのセットアップ
+```bash
+cd hns-frontend
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+# 依存関係のインストール
+npm install
 
-## License
+# 開発サーバーの起動
+npm start
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+## 📋 主要機能（MVP）
+
+| 機能ID | 機能名 | 説明 |
+|--------|--------|------|
+| F-001 | マップ表示機能 | Leaflet.jsを使用した全世界地図の表示、ズーム・パン操作 |
+| F-002 | キャラクター配置機能 | バックエンドAPIによる予定義座標への固定キャラクター配置 |
+| F-003 | キャラクター発見機能 | マップ上のカスタムアイコンクリックによる「発見！」体験 |
+
+## 🎯 ユーザーストーリー
+
+| ID | 役割 | 要求 | 目的 |
+|----|------|------|------|
+| US-001 | プレイヤー | 世界地図を見たい | どこを探すか考えられるように |
+| US-002 | プレイヤー | マップ上に隠れているキャラクターを見たい | 探す対象がわかるように |
+| US-003 | プレイヤー | キャラクターをクリックしたい | 発見したことを確定できるように |
+| US-004 | プレイヤー | 発見したら成功メッセージを見たい | 達成感を得られるように |
+
+## 🎨 ターゲットユーザー
+
+### ペルソナ1: 地理愛好家
+- 20〜30代男性
+- GeoGuessrなどの地図ゲーム経験者
+- 探索・発見に興味がある
+
+### ペルソナ2: ファミリー層
+- 30〜40代の親子
+- 知育ゲームを求めている
+- 一緒に楽しめる体験を重視
+
+## 🛣️ ロードマップ
+
+### Phase 1: MVP (現在)
+- [x] プロジェクト基盤構築
+- [ ] 基本的なマップ表示
+- [ ] キャラクター配置・発見機能
+- [ ] シンプルなUI/UX
+
+### Phase 2: 機能拡張
+- [ ] マルチプレイヤー対応
+- [ ] ユーザー認証システム
+- [ ] キャラクターコレクション機能
+- [ ] リーダーボード
+
+### Phase 3: 収益化
+- [ ] フリーミアムモデル導入
+- [ ] コスメティックアイテム
+- [ ] サブスクリプション機能
+
+## 🤝 コントリビューション
+
+プロジェクトへの貢献を歓迎しています！
+
+1. このリポジトリをフォーク
+2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
+3. 変更をコミット (`git commit -m 'Add amazing feature'`)
+4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
+5. プルリクエストを開く
+
+## 📄 ライセンス
+
+このプロジェクトは MIT ライセンスの下で公開されています。詳細は [LICENSE](LICENSE) ファイルを参照してください。
+
+## 📞 お問い合わせ
+
+プロジェクトに関する質問やフィードバックがありましたら、お気軽にお声がけください。
+
+---
+
+**注意**: このプロジェクトは開発段階にあり、機能や仕様は変更される可能性があります。
