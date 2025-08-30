@@ -1,0 +1,114 @@
+version: 2
+updates:
+  # Laravel/PHP dependencies
+  - package-ecosystem: "composer"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    assignees:
+      - "@octocat"  # プロジェクトのメインアサイニーに変更してください
+    commit-message:
+      prefix: "composer"
+      prefix-development: "composer-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "composer"
+      - "backend"
+    # セキュリティアップデートを優先
+    allow:
+      - dependency-type: "all"
+    # 脆弱性のあるパッケージは即座に更新
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+    # グループ化設定
+    groups:
+      laravel:
+        patterns:
+          - "laravel/*"
+      testing:
+        patterns:
+          - "phpunit/*"
+          - "mockery/*"
+          - "*phpstan*"
+          - "*larastan*"
+
+  # React/Node.js dependencies
+  - package-ecosystem: "npm"
+    directory: "/hns-frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 5
+    assignees:
+      - "@octocat"  # プロジェクトのメインアサイニーに変更してください
+    commit-message:
+      prefix: "npm"
+      prefix-development: "npm-dev"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "npm"
+      - "frontend"
+    # セキュリティアップデートを優先
+    allow:
+      - dependency-type: "all"
+    # メジャーバージョンアップデートを制限（必要に応じて調整）
+    ignore:
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-scripts"
+        update-types: ["version-update:semver-major"]
+    # グループ化設定
+    groups:
+      react:
+        patterns:
+          - "react*"
+          - "@types/react*"
+      testing:
+        patterns:
+          - "@testing-library/*"
+          - "jest*"
+      eslint:
+        patterns:
+          - "eslint*"
+          - "@typescript-eslint/*"
+      build-tools:
+        patterns:
+          - "typescript"
+          - "prettier"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "Asia/Tokyo"
+    open-pull-requests-limit: 2
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    labels:
+      - "dependencies"
+      - "github-actions"
+      - "ci"
+
+# 設定のベストプラクティス:
+# 1. 週1回の更新頻度でPRの数を制限
+# 2. セキュリティアップデートは優先的に処理
+# 3. レビューアーとアサイニーを設定
+# 4. 適切なラベルを付与
+# 5. コミットメッセージにプレフィックスを追加
+# 6. 関連する依存関係をグループ化
+# 7. メジャーバージョンアップデートは慎重に処理

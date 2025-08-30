@@ -1,0 +1,56 @@
+# Development files
+.env.example
+.env.local
+.env.testing
+.git/
+.github/
+.gitignore
+.gitattributes
+
+# Node.js
+node_modules/
+hns-frontend/node_modules/
+hns-frontend/src/
+hns-frontend/public/
+hns-frontend/package.json
+hns-frontend/package-lock.json
+hns-frontend/tsconfig.json
+hns-frontend/.eslintrc.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PHP/Laravel development
+/tests/
+/phpunit.xml
+/.phpunit.result.cache
+phpstan.neon
+.php-cs-fixer.cache
+
+# IDE files
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+
+# Documentation
+README.md
+SECURITY.md
+CHANGELOG.md
+docs/
+
+# CI/CD
+.deployignore
+
+# Logs and temp files
+*.log
+storage/logs/
+bootstrap/cache/
+.temp/
+
+# Development tools
+composer.lock
+vendor/bin/
+artisan
