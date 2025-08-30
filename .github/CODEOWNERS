@@ -1,0 +1,44 @@
+# Code Owners for HNS Backend Project
+# https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
+
+# Global owners - will be requested for review on all PRs
+* @Daisuke106
+
+# Backend specific
+*.php @Daisuke106
+composer.json @Daisuke106
+composer.lock @Daisuke106
+app/ @Daisuke106
+config/ @Daisuke106
+database/ @Daisuke106
+routes/ @Daisuke106
+
+# Frontend specific  
+hns-frontend/ @Daisuke106
+*.js @Daisuke106
+*.jsx @Daisuke106
+*.ts @Daisuke106
+*.tsx @Daisuke106
+package.json @Daisuke106
+package-lock.json @Daisuke106
+
+# CI/CD and DevOps
+.github/ @Daisuke106
+Dockerfile* @Daisuke106
+docker-compose*.yml @Daisuke106
+*.yml @Daisuke106
+*.yaml @Daisuke106
+
+# Security and configuration
+SECURITY.md @Daisuke106
+.env.example @Daisuke106
+phpstan.neon @Daisuke106
+.eslintrc.json @Daisuke106
+
+# Documentation
+docs/ @Daisuke106
+*.md @Daisuke106
+
+# Root configuration files
+.gitignore @Daisuke106
+.deployignore @Daisuke106
