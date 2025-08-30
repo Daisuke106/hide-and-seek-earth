@@ -1,0 +1,44 @@
+# Code Owners for HNS Backend Project
+# https://docs.github.com/en/github/creating-cloning-and-archiving-repositories/about-code-owners
+
+# Global owners - will be requested for review on all PRs
+* @octocat
+
+# Backend specific
+*.php @octocat
+composer.json @octocat
+composer.lock @octocat
+app/ @octocat
+config/ @octocat
+database/ @octocat
+routes/ @octocat
+
+# Frontend specific  
+hns-frontend/ @octocat
+*.js @octocat
+*.jsx @octocat
+*.ts @octocat
+*.tsx @octocat
+package.json @octocat
+package-lock.json @octocat
+
+# CI/CD and DevOps
+.github/ @octocat
+Dockerfile* @octocat
+docker-compose*.yml @octocat
+*.yml @octocat
+*.yaml @octocat
+
+# Security and configuration
+SECURITY.md @octocat
+.env.example @octocat
+phpstan.neon @octocat
+.eslintrc.json @octocat
+
+# Documentation
+docs/ @octocat
+*.md @octocat
+
+# Root configuration files
+.gitignore @octocat
+.deployignore @octocat
