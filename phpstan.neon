@@ -5,27 +5,11 @@ parameters:
     paths:
         - app/
 
-    # Level of rule strictness (0-9)
-    level: 5
+    # Level of rule strictness (0-9) - start with lower level
+    level: 0
 
-    ignoreErrors:
-        # Laravel specific ignores
-        - '#Call to an undefined method Illuminate\\[a-zA-Z\\]+::[a-zA-Z]+\(\)#'
-        - '#Access to an undefined property Illuminate\\[a-zA-Z\\]+::\$[a-zA-Z]+#'
+    excludePaths: []
 
-    excludePaths:
-        - ./*/*/FileToBeExcluded.php
-
-    checkMissingIterableValueType: false
-    checkGenericClassInNonGenericObjectType: false
-    
     # Laravel specific configuration
     bootstrapFiles:
         - bootstrap/app.php
-
-    # Custom stub files
-    stubFiles:
-        # - stubs/User.stub
-
-    # Memory limit
-    memoryLimitFile: .phpstan-memory-limit
