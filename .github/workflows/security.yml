@@ -66,6 +66,7 @@ jobs:
   codeql:
     name: CodeQL Analysis
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[security]'))
     permissions:
       actions: read
       contents: read
@@ -120,6 +121,8 @@ jobs:
         uses: github/codeql-action/analyze@v3
         with:
           category: "/language:${{matrix.language}}"
+          upload: true
+          cleanup-level: none
 
   php-static-analysis:
     name: PHP Static Analysis
@@ -156,8 +159,10 @@ jobs:
       - name: Dependency Review
         uses: actions/dependency-review-action@v4
         with:
-          fail-on-severity: moderate
+          fail-on-severity: high
           allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, BSD-3-Clause-Clear, ISC, GPL-3.0, GPL-2.0, LGPL-2.1, LGPL-3.0, MPL-2.0, CC0-1.0
+          comment-summary-in-pr: false
+          deny-licenses: AGPL-3.0
 
   secrets-scan:
     name: Secrets Scanning
