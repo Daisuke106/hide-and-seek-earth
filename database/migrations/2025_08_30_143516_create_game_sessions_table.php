@@ -17,7 +17,7 @@ return new class extends Migration
             $table->json('character_ids'); // 探すキャラクターのIDリスト
             $table->timestamp('start_time');
             $table->timestamp('end_time')->nullable();
-            $table->json('found_characters')->default('[]'); // 発見されたキャラクターのIDリスト
+            $table->json('found_characters')->nullable(); // 発見されたキャラクターのIDリスト
             $table->integer('total_score')->default(0);
             $table->boolean('is_completed')->default(false);
             $table->json('game_data')->nullable(); // 追加のゲームデータ
