@@ -15,7 +15,7 @@ class CharacterControllerTest extends TestCase
         parent::setUp();
         
         // データベースをクリーンな状態にする
-        Character::query()->delete();
+        
         
         // テスト用のキャラクターを作成
         Character::factory()->createMany([
