@@ -70,7 +70,7 @@ class GameSessionControllerTest extends TestCase
                  ]);
 
         $this->assertDatabaseHas('game_sessions', [
-            'character_ids' => json_encode($characterIds),
+            'character_ids' => json_encode($characterIds, JSON_UNESCAPED_UNICODE),
             'is_completed' => false,
             'total_score' => 0
         ]);
