@@ -1,0 +1,265 @@
+.street-view-panel {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.street-view-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #4285f4;
+  color: white;
+}
+
+.street-view-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.street-view-close {
+  background: none;
+  border: none;
+  color: white;
+  font-size: 24px;
+  cursor: pointer;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s ease;
+}
+
+.street-view-close:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.street-view-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.position-info {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.position-coords {
+  font-size: 14px;
+  color: #666;
+  font-family: monospace;
+}
+
+.street-view-container {
+  flex: 1;
+  position: relative;
+  min-height: 300px;
+}
+
+.street-view {
+  width: 100%;
+  height: 100%;
+}
+
+.street-view-loading {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  z-index: 10;
+}
+
+.street-view-loading .loading-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #4285f4;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.street-view-loading p {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+}
+
+.street-view-error {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 32px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  margin: 20px;
+  z-index: 10;
+}
+
+.street-view-error h4 {
+  margin: 0 0 12px 0;
+  color: #856404;
+}
+
+.street-view-error p {
+  margin: 8px 0;
+  color: #856404;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.street-view-placeholder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  padding: 32px;
+  color: #666;
+}
+
+.street-view-placeholder h4 {
+  margin: 0 0 12px 0;
+  color: #333;
+}
+
+.street-view-placeholder p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.street-view-controls {
+  padding: 12px 20px;
+  background: #f8f9fa;
+  border-top: 1px solid #e0e0e0;
+}
+
+.control-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.control-label {
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+}
+
+.control-hint {
+  font-size: 13px;
+  color: #666;
+}
+
+.character-hints {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.character-hints h4 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+  color: #333;
+}
+
+.character-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.character-hint {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(66, 133, 244, 0.1);
+  border-radius: 6px;
+  border-left: 3px solid #4285f4;
+  gap: 12px;
+}
+
+.character-name {
+  font-weight: 500;
+  color: #333;
+  font-size: 14px;
+}
+
+.difficulty-badge {
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.difficulty-badge.easy {
+  background-color: #4caf50;
+}
+
+.difficulty-badge.medium {
+  background-color: #ff9800;
+}
+
+.difficulty-badge.hard {
+  background-color: #f44336;
+}
+
+.hint-text {
+  margin: 0;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.4;
+  font-style: italic;
+}
+
+.discovery-button {
+  background: #4caf50;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  flex-shrink: 0;
+}
+
+.discovery-button:hover:not(:disabled) {
+  background: #45a049;
+}
+
+.discovery-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}

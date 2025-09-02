@@ -3,10 +3,12 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@googlemaps/js-api-loader": "^1.16.10",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.8.0",
     "@testing-library/react": "^16.3.0",
     "@testing-library/user-event": "^14.6.1",
+    "@types/google.maps": "^3.58.1",
     "@types/jest": "^30.0.0",
     "@types/node": "^24.3.0",
     "@types/react": "^19.1.12",
@@ -46,10 +48,16 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "http-proxy-middleware": "^3.0.5",
     "prettier": "^3.6.2"
   },
   "overrides": {
     "nth-check": ">=2.0.1",
-    "postcss": ">=8.4.31"
-  }
+    "postcss": ">=8.4.31",
+    "webpack-dev-server": "4.15.2"
+  },
+  "resolutions": {
+    "webpack-dev-server": "4.15.2"
+  },
+  "proxy": "http://localhost:8000"
 }

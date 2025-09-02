@@ -20,7 +20,7 @@ Google Map（または代替地図）を使って、全世界に隠されたオ�
 
 ### フロントエンド
 - **フレームワーク**: React (TypeScript)
-- **地図ライブラリ**: Leaflet.js
+- **地図ライブラリ**: Google Maps API
 - **開発環境**: Create React App
 
 ### バックエンド
@@ -60,7 +60,10 @@ php artisan key:generate
 # データベースマイグレーション
 php artisan migrate
 
-# 開発サーバーの起動
+# シーダーの実行（サンプルデータの作成）
+php artisan db:seed
+
+# 開発サーバーの起動（ポート8000）
 php artisan serve
 ```
 
@@ -71,17 +74,39 @@ cd hns-frontend
 # 依存関係のインストール
 npm install
 
-# 開発サーバーの起動
+# 環境設定ファイルの作成
+cp .env.example .env
+
+# Google Maps API キーの設定（.envファイル内）
+# REACT_APP_GOOGLE_MAPS_API_KEY=your_api_key_here
+
+# 開発サーバーの起動（ポート3000）
 npm start
 ```
+
+### 4. アクセス方法
+
+#### 開発環境
+- **フロントエンド**: http://localhost:3000
+- **バックエンドAPI**: http://localhost:8000/api
+- **Laravel管理画面**: http://localhost:8000
+
+#### Google Maps API キーの取得
+1. [Google Cloud Console](https://console.cloud.google.com/) にアクセス
+2. 新しいプロジェクトを作成または既存のプロジェクトを選択
+3. Maps JavaScript API を有効化
+4. 認証情報でAPIキーを作成
+5. APIキーを `hns-frontend/.env` の `REACT_APP_GOOGLE_MAPS_API_KEY` に設定
 
 ## 📋 主要機能（MVP）
 
 | 機能ID | 機能名 | 説明 |
 |--------|--------|------|
-| F-001 | マップ表示機能 | Leaflet.jsを使用した全世界地図の表示、ズーム・パン操作 |
+| F-001 | マップ表示機能 | Google Maps APIを使用した全世界地図の表示、ズーム・パン操作 |
 | F-002 | キャラクター配置機能 | バックエンドAPIによる予定義座標への固定キャラクター配置 |
 | F-003 | キャラクター発見機能 | マップ上のカスタムアイコンクリックによる「発見！」体験 |
+| F-004 | キャラクター選択機能 | 探索するキャラクターの選択とフィルタリング機能 |
+| F-005 | ゲームセッション管理 | ゲームの開始・終了・スコア管理機能 |
 
 ## 🎯 ユーザーストーリー
 
@@ -108,9 +133,12 @@ npm start
 
 ### Phase 1: MVP (現在)
 - [x] プロジェクト基盤構築
-- [ ] 基本的なマップ表示
-- [ ] キャラクター配置・発見機能
-- [ ] シンプルなUI/UX
+- [x] 基本的なマップ表示（Google Maps API）
+- [x] キャラクター配置・発見機能
+- [x] キャラクター選択・フィルタリング機能
+- [x] シンプルなUI/UX
+- [x] バックエンドAPI（Laravel）
+- [x] フロントエンド（React + TypeScript）
 
 ### Phase 2: 機能拡張
 - [ ] マルチプレイヤー対応
