@@ -76,6 +76,8 @@ jobs:
   # React Frontend Tests
   frontend-tests:
     name: Frontend Tests
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     
     steps:
