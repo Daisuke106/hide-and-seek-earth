@@ -16,6 +16,8 @@ export interface Character {
     lng: number;
   };
   isVisibleInStreetView?: boolean;
+  gameLocation?: string; // ゲーム内での配置エリア名
+  isDiscoverable?: boolean; // ストリートビューで発見可能かどうか
 }
 
 export interface GameSession {
