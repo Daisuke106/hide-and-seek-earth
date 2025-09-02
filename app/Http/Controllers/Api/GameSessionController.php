@@ -117,7 +117,8 @@ class GameSessionController extends Controller
         if (in_array($characterId, $session->found_characters ?? [])) {
             return response()->json([
                 'message' => 'Character already found.',
-                'session' => $session            ]);
+                'session' => $session
+            ]);
         }
 
         // キャラクターを発見済みとしてマーク
