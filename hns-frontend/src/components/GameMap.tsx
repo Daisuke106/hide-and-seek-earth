@@ -12,6 +12,8 @@ interface GameMapProps {
   zoom?: number;
   showFoundCharacters?: boolean;
   onMapReady?: (map: google.maps.Map) => void;
+  showCharacters?: boolean;
+  gameStarted?: boolean;
 }
 
 export const GameMap: React.FC<GameMapProps> = ({
@@ -21,7 +23,9 @@ export const GameMap: React.FC<GameMapProps> = ({
   center,
   zoom = 10,
   showFoundCharacters = true,
-  onMapReady
+  onMapReady,
+  showCharacters = false,
+  gameStarted = false
 }) => {
   const mapElementRef = useRef<HTMLDivElement>(null);
   const markersRef = useRef<Map<number, google.maps.Marker>>(new Map());
@@ -82,7 +86,10 @@ export const GameMap: React.FC<GameMapProps> = ({
 
     // 新しいマーカーを作成
     characters.forEach(character => {
-      const shouldShow = showFoundCharacters || !character.isFound;
+      // キャラクターを表示する条件:
+      // 1. ゲームが開始されていない、または
+      // 2. ゲームが開始されており、かつヒントが表示されている場合
+      const shouldShow = !gameStarted || (gameStarted && showCharacters && (showFoundCharacters || !character.isFound));
       if (!shouldShow) return;
 
       const marker = new google.maps.Marker({
@@ -124,7 +131,7 @@ export const GameMap: React.FC<GameMapProps> = ({
 
       markersRef.current.set(character.id, marker);
     });
-  }, [map, characters, onCharacterClick, showFoundCharacters]);
+  }, [map, characters, onCharacterClick, showFoundCharacters, showCharacters, gameStarted]);
 
   // キャラクターが変更されたときにマーカーを更新
   useEffect(() => {

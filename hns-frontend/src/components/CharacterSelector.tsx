@@ -10,6 +10,8 @@ interface CharacterSelectorProps {
   isVisible: boolean;
   maxSelection?: number;
   minSelection?: number;
+  title?: string;
+  description?: string;
 }
 
 export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
@@ -17,7 +19,9 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   onClose,
   isVisible,
   maxSelection = 5,
-  minSelection = 1
+  minSelection = 1,
+  title = "キャラクターを選択",
+  description
 }) => {
   const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]);
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
@@ -132,13 +136,19 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   return (
     <div className="character-selector">
       <div className="selector-header">
-        <h2 className="selector-title">キャラクターを選択</h2>
+        <h2 className="selector-title">{title}</h2>
         {onClose && (
           <button className="selector-close" onClick={onClose} aria-label="閉じる">
             ×
           </button>
         )}
       </div>
+
+      {description && (
+        <div className="selector-description">
+          <p>{description}</p>
+        </div>
+      )}
 
       <div className="selector-content">
         <div className="selection-info">

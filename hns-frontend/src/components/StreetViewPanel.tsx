@@ -120,13 +120,20 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
             <h4>🎯 この周辺に隠れているキャラクター:</h4>
             <div className="character-list">
               {streetViewCharacters
-                .filter(char => char.isVisibleInStreetView)
+                .filter(char => char.isVisibleInStreetView && !char.isFound)
                 .map(character => (
                   <div key={character.id} className="character-hint">
                     <span className="character-name">{character.name}</span>
                     <span className={`difficulty-badge ${character.difficulty}`}>
                       {character.difficulty}
                     </span>
+                    <button
+                      className="discovery-button"
+                      onClick={() => onCharacterFound && onCharacterFound(character)}
+                      disabled={character.isFound}
+                    >
+                      {character.isFound ? '発見済み' : '発見！'}
+                    </button>
                   </div>
                 ))
               }
@@ -134,6 +141,7 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
             <p className="hint-text">
               💡 ヒント: 周りを見回してキャラクターを探してみてください！
               建物、看板、道路標識などに隠れているかもしれません。
+              キャラクターを見つけたら「発見！」ボタンを押してください。
             </p>
           </div>
         )}
