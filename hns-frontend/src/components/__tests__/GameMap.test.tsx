@@ -13,7 +13,7 @@ const mockMap = {
 
 const mockMarker = {
   setMap: jest.fn(),
-  addListener: jest.fn(),
+  addListener: jest.fn(() => ({ remove: jest.fn() })),
   setPosition: jest.fn(),
 };
 
@@ -25,13 +25,33 @@ const mockInfoWindow = {
 
 // Google Maps APIの完全なモック
 beforeAll(() => {
+  // Markerクラスをプロトタイプ付きで正しくモック
+  const MockMarker = function(this: any, options: any) {
+    Object.assign(this, mockMarker);
+    this.options = options;
+  };
+  MockMarker.prototype = mockMarker;
+
+  const MockInfoWindow = function(this: any, options: any) {
+    Object.assign(this, mockInfoWindow);
+    this.options = options;
+  };
+  MockInfoWindow.prototype = mockInfoWindow;
+
+  const MockMap = function(this: any, element: any, options: any) {
+    Object.assign(this, mockMap);
+    this.element = element;
+    this.options = options;
+  };
+  MockMap.prototype = mockMap;
+
   (global as any).google = {
     maps: {
-      Map: jest.fn(() => mockMap),
-      Marker: jest.fn(() => mockMarker),
-      InfoWindow: jest.fn(() => mockInfoWindow),
-      Size: jest.fn((width, height) => ({ width, height })),
-      Point: jest.fn((x, y) => ({ x, y })),
+      Map: MockMap,
+      Marker: MockMarker,
+      InfoWindow: MockInfoWindow,
+      Size: jest.fn((width: number, height: number) => ({ width, height })),
+      Point: jest.fn((x: number, y: number) => ({ x, y })),
       Animation: {
         BOUNCE: 'BOUNCE',
       },

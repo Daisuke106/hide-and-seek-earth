@@ -51,22 +51,27 @@ class CharacterControllerTest extends TestCase
         $response = $this->getJson('/api/characters');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(2) // アクティブなキャラクターのみ
                  ->assertJsonStructure([
-                     '*' => [
-                         'id',
-                         'name',
-                         'description',
-                         'image_url',
-                         'latitude',
-                         'longitude',
-                         'difficulty',
-                         'is_active',
-                         'position' => ['lat', 'lng'],
-                         'created_at',
-                         'updated_at'
-                     ]
-                 ]);
+                     'data' => [
+                         '*' => [
+                             'id',
+                             'name',
+                             'description',
+                             'image_url',
+                             'latitude',
+                             'longitude',
+                             'difficulty',
+                             'is_active',
+                             'position' => ['lat', 'lng'],
+                             'created_at',
+                             'updated_at'
+                         ]
+                     ],
+                     'current_page',
+                     'per_page',
+                     'total'
+                 ])
+                 ->assertJsonPath('total', 2); // アクティブなキャラクターのみ
     }
 
     public function test_can_filter_characters_by_difficulty()
@@ -74,7 +79,7 @@ class CharacterControllerTest extends TestCase
         $response = $this->getJson('/api/characters?difficulty=easy');
 
         $response->assertStatus(200)
-                 ->assertJsonCount(1)
+                 ->assertJsonPath('total', 1)
                  ->assertJsonFragment(['difficulty' => 'easy']);
     }
 
@@ -259,7 +264,8 @@ class CharacterControllerTest extends TestCase
 
         $response->assertStatus(200);
         
-        $characters = $response->json();
+        $responseData = $response->json();
+        $characters = $responseData['data'];
         $this->assertNotEmpty($characters, 'Characters array should not be empty');
         
         foreach ($characters as $character) {
