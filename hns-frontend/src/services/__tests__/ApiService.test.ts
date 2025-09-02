@@ -57,6 +57,7 @@ describe('ApiService', () => {
         ok: false,
         status: 500,
         statusText: 'Internal Server Error',
+        text: async () => 'Server Error',
       });
 
       await expect(apiService.getCharacters()).rejects.toThrow(
@@ -109,7 +110,7 @@ describe('ApiService', () => {
         'http://localhost:8000/api/game-sessions',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ characterIds: [1, 2, 3] }),
+          body: JSON.stringify({ character_ids: [1, 2, 3] }),
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
           }),
@@ -136,7 +137,7 @@ describe('ApiService', () => {
         'http://localhost:8000/api/game-sessions/test-session-id/found',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ characterId: 1 }),
+          body: JSON.stringify({ character_id: 1 }),
         })
       );
       expect(result).toEqual(updatedSession);
@@ -173,6 +174,7 @@ describe('ApiService', () => {
         ok: false,
         status: 404,
         statusText: 'Not Found',
+        text: async () => 'Resource not found',
       });
 
       await expect(apiService.getCharacters()).rejects.toThrow(

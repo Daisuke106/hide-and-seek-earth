@@ -38,7 +38,15 @@ class ApiService {
       console.log(`API Response: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        const errorText = await response.text();
+        let errorText = '';
+        try {
+          if (typeof response.text === 'function') {
+            errorText = await response.text();
+          }
+        } catch (e) {
+          // テスト環境などでresponse.textが利用できない場合
+          errorText = 'Unable to read response body';
+        }
         throw new Error(
           `API request failed: ${response.status} ${response.statusText}. Response: ${errorText}`
         );
@@ -52,7 +60,7 @@ class ApiService {
       // ネットワーク接続エラーの場合は特別な処理
       if (error instanceof TypeError && error.message.includes('fetch')) {
         throw new Error(
-          'Network connection error. Make sure the backend server is running.'
+          `Network connection error. Make sure the backend server is running at ${API_BASE_URL}`
         );
       }
       throw error;
