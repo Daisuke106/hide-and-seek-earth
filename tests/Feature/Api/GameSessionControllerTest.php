@@ -69,11 +69,15 @@ class GameSessionControllerTest extends TestCase
                      ]
                  ]);
 
-        $this->assertDatabaseHas('game_sessions', [
-            'character_ids' => json_encode($characterIds, JSON_UNESCAPED_UNICODE),
-            'is_completed' => false,
-            'total_score' => 0
-        ]);
+        // データベースにレコードが作成されていることを確認
+        $this->assertDatabaseCount('game_sessions', 1);
+        
+        // 作成されたセッションを取得してプロパティを確認
+        $session = GameSession::latest()->first();
+        $this->assertNotNull($session);
+        $this->assertEquals($characterIds, $session->character_ids);
+        $this->assertFalse($session->is_completed);
+        $this->assertEquals(0, $session->total_score);
     }
 
     public function test_game_session_creation_validates_character_ids()
