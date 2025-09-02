@@ -1,11 +1,11 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📚 ドキュメント
-    url: https://github.com/owner/repo/wiki
+    url: /wiki
     about: プロジェクトの詳細なドキュメントはこちら
   - name: 💬 ディスカッション
-    url: https://github.com/owner/repo/discussions
+    url: /discussions
     about: 一般的な議論や質問はディスカッションをご利用ください
   - name: 🔒 セキュリティ報告
-    url: https://github.com/owner/repo/security/advisories/new
+    url: /security/advisories/new
     about: セキュリティに関する脆弱性の報告はこちら

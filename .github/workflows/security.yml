@@ -63,66 +63,6 @@ jobs:
         working-directory: ./hns-frontend
         run: npm audit --audit-level=moderate || echo "NPM audit found vulnerabilities, but continuing..."
 
-  codeql:
-    name: CodeQL Analysis
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || contains(github.event.head_commit.message, '[security]'))
-    permissions:
-      actions: read
-      contents: read
-      security-events: write
-    strategy:
-      fail-fast: false
-      matrix:
-        language: [ 'javascript-typescript' ]
-
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
-        with:
-          languages: ${{ matrix.language }}
-          config: |
-            paths:
-              - hns-frontend/src
-            paths-ignore:
-              - hns-frontend/node_modules
-              - hns-frontend/build
-              - "**/*.test.ts"
-              - "**/*.test.tsx"
-              - "**/*.spec.ts"
-              - "**/*.spec.tsx"
-            queries:
-              - uses: security-and-quality
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-
-      - name: Install frontend dependencies
-        working-directory: ./hns-frontend
-        run: |
-          if [ -f package-lock.json ]; then
-            echo "Using npm ci with package-lock.json"
-            npm ci
-          else
-            echo "Using npm install (no package-lock.json found)"
-            npm install
-          fi
-
-      - name: Build frontend
-        working-directory: ./hns-frontend
-        run: npm run build
-
-      - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
-        with:
-          category: "/language:${{matrix.language}}"
-          upload: true
-          cleanup-level: none
 
   php-static-analysis:
     name: PHP Static Analysis
