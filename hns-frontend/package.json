@@ -48,6 +48,7 @@
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^5.2.0",
+    "http-proxy-middleware": "^3.0.5",
     "prettier": "^3.6.2"
   },
   "overrides": {
