@@ -14,6 +14,9 @@ class CharacterControllerTest extends TestCase
     {
         parent::setUp();
         
+        // データベースをクリーンな状態にする
+        Character::query()->delete();
+        
         // テスト用のキャラクターを作成
         Character::factory()->createMany([
             [
@@ -257,7 +260,10 @@ class CharacterControllerTest extends TestCase
         $response->assertStatus(200);
         
         $characters = $response->json();
+        $this->assertNotEmpty($characters, 'Characters array should not be empty');
+        
         foreach ($characters as $character) {
+            $this->assertIsArray($character, 'Each character should be an array');
             $this->assertArrayHasKey('position', $character);
             $this->assertArrayHasKey('lat', $character['position']);
             $this->assertArrayHasKey('lng', $character['position']);

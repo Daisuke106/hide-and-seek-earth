@@ -111,7 +111,11 @@ class GameSessionControllerTest extends TestCase
     public function test_can_get_game_session()
     {
         $session = GameSession::factory()->create([
-            'character_ids' => $this->characters->take(2)->pluck('id')->toArray()
+            'character_ids' => $this->characters->take(2)->pluck('id')->toArray(),
+            'is_completed' => false,
+            'found_characters' => [],
+            'total_score' => 0,
+            'end_time' => null
         ]);
 
         $response = $this->getJson("/api/game-sessions/{$session->session_id}");
