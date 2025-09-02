@@ -154,7 +154,8 @@ class GameSessionController extends Controller
 
         return response()->json([
             'message' => 'Game session completed successfully!',
-            'session' => $session->fresh()        ]);
+            'session' => $session->fresh()
+        ]);
     }
 
     /**
