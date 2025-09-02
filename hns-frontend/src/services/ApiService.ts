@@ -8,21 +8,27 @@ interface LeaderboardEntry {
   completedAt: string;
 }
 
-const API_BASE_URL = process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
 class ApiService {
-  private async fetchJson<T>(endpoint: string, options?: RequestInit): Promise<T> {
+  private async fetchJson<T>(
+    endpoint: string,
+    options?: RequestInit
+  ): Promise<T> {
     const response = await fetch(`${API_BASE_URL}${endpoint}`, {
       headers: {
         'Content-Type': 'application/json',
-        'Accept': 'application/json',
+        Accept: 'application/json',
         ...options?.headers,
       },
       ...options,
     });
 
     if (!response.ok) {
-      throw new Error(`API request failed: ${response.status} ${response.statusText}`);
+      throw new Error(
+        `API request failed: ${response.status} ${response.statusText}`
+      );
     }
 
     return response.json();
@@ -30,9 +36,15 @@ class ApiService {
 
   // キャラクター関連のAPI
   async getCharacters(): Promise<Character[]> {
-    const response = await this.fetchJson<{ data: Character[] } | Character[]>('/characters');
+    const response = await this.fetchJson<{ data: Character[] } | Character[]>(
+      '/characters'
+    );
     // Laravelのpaginatedレスポンスかどうかをチェック
-    if (typeof response === 'object' && 'data' in response && Array.isArray(response.data)) {
+    if (
+      typeof response === 'object' &&
+      'data' in response &&
+      Array.isArray(response.data)
+    ) {
       return response.data;
     }
     // 配列が直接返ってきた場合
@@ -59,14 +71,20 @@ class ApiService {
     return this.fetchJson<GameSession>(`/game-sessions/${sessionId}`);
   }
 
-  async updateGameSession(sessionId: string, updates: Partial<GameSession>): Promise<GameSession> {
+  async updateGameSession(
+    sessionId: string,
+    updates: Partial<GameSession>
+  ): Promise<GameSession> {
     return this.fetchJson<GameSession>(`/game-sessions/${sessionId}`, {
       method: 'PUT',
       body: JSON.stringify(updates),
     });
   }
 
-  async markCharacterAsFound(sessionId: string, characterId: number): Promise<GameSession> {
+  async markCharacterAsFound(
+    sessionId: string,
+    characterId: number
+  ): Promise<GameSession> {
     return this.fetchJson<GameSession>(`/game-sessions/${sessionId}/found`, {
       method: 'POST',
       body: JSON.stringify({ characterId }),

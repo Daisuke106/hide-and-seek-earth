@@ -33,12 +33,12 @@ beforeAll(() => {
       Size: jest.fn((width, height) => ({ width, height })),
       Point: jest.fn((x, y) => ({ x, y })),
       Animation: {
-        BOUNCE: 'BOUNCE'
+        BOUNCE: 'BOUNCE',
       },
       event: {
-        removeListener: jest.fn()
-      }
-    }
+        removeListener: jest.fn(),
+      },
+    },
   };
 });
 
@@ -51,8 +51,8 @@ jest.mock('../../hooks/useGoogleMaps', () => ({
     initializeMap: jest.fn().mockImplementation(() => {
       // Simulate map initialization by resolving immediately
       return Promise.resolve();
-    })
-  })
+    }),
+  }),
 }));
 
 describe('GameMap', () => {
@@ -64,17 +64,17 @@ describe('GameMap', () => {
       imageUrl: '/test1.png',
       position: { lat: 35.6762, lng: 139.6503 },
       difficulty: 'easy' as const,
-      isFound: false
+      isFound: false,
     },
     {
       id: 2,
-      name: 'Test Character 2', 
+      name: 'Test Character 2',
       description: 'Second test character',
       imageUrl: '/test2.png',
       position: { lat: 35.6852, lng: 139.7528 },
       difficulty: 'medium' as const,
-      isFound: true
-    }
+      isFound: true,
+    },
   ];
 
   const mockProps = {
@@ -83,7 +83,7 @@ describe('GameMap', () => {
     onMapClick: jest.fn(),
     center: { lat: 35.6762, lng: 139.6503 },
     zoom: 10,
-    showFoundCharacters: true
+    showFoundCharacters: true,
   };
 
   beforeEach(() => {
@@ -92,7 +92,7 @@ describe('GameMap', () => {
 
   it('renders map container', () => {
     render(<GameMap {...mockProps} />);
-    
+
     // data-testidを使用してマップコンテナーを取得
     const mapContainer = screen.getByTestId('game-map');
     expect(mapContainer).toBeInTheDocument();
@@ -105,44 +105,46 @@ describe('GameMap', () => {
       map: null,
       isLoading: true,
       error: null,
-      initializeMap: jest.fn().mockResolvedValue(undefined)
+      initializeMap: jest.fn().mockResolvedValue(undefined),
     });
 
     render(<GameMap {...mockProps} />);
-    
+
     expect(screen.getByText('マップを読み込み中...')).toBeInTheDocument();
-    
+
     // Restore the mock
     useGoogleMaps.useGoogleMaps.mockRestore();
   });
 
   it('shows error state when there is an error', () => {
     const errorMessage = 'Failed to load map';
-    
+
     // Mock the hook directly for this test
     const useGoogleMaps = require('../../hooks/useGoogleMaps');
     jest.spyOn(useGoogleMaps, 'useGoogleMaps').mockReturnValueOnce({
       map: null,
       isLoading: false,
       error: errorMessage,
-      initializeMap: jest.fn().mockResolvedValue(undefined)
+      initializeMap: jest.fn().mockResolvedValue(undefined),
     });
 
     render(<GameMap {...mockProps} />);
-    
-    expect(screen.getByText('マップの読み込みでエラーが発生しました')).toBeInTheDocument();
+
+    expect(
+      screen.getByText('マップの読み込みでエラーが発生しました')
+    ).toBeInTheDocument();
     expect(screen.getByText(errorMessage)).toBeInTheDocument();
-    
+
     // Restore the mock
     useGoogleMaps.useGoogleMaps.mockRestore();
   });
 
   it('has onCharacterClick prop configured', () => {
     render(<GameMap {...mockProps} />);
-    
+
     // Verify the component renders with the onCharacterClick callback
     expect(screen.getByTestId('game-map')).toBeInTheDocument();
-    
+
     // The callback should be properly passed to the component
     expect(mockProps.onCharacterClick).toBeDefined();
     expect(typeof mockProps.onCharacterClick).toBe('function');
@@ -150,10 +152,10 @@ describe('GameMap', () => {
 
   it('has onMapClick prop configured', () => {
     render(<GameMap {...mockProps} />);
-    
+
     // Verify the component renders with the onMapClick callback
     expect(screen.getByTestId('game-map')).toBeInTheDocument();
-    
+
     // The callback should be properly passed to the component
     expect(mockProps.onMapClick).toBeDefined();
     expect(typeof mockProps.onMapClick).toBe('function');
@@ -162,11 +164,11 @@ describe('GameMap', () => {
   it('renders with correct props structure', () => {
     const propsWithoutFound = {
       ...mockProps,
-      showFoundCharacters: false
+      showFoundCharacters: false,
     };
 
     render(<GameMap {...propsWithoutFound} />);
-    
+
     // Verify the component renders without crashing
     expect(screen.getByTestId('game-map')).toBeInTheDocument();
     expect(screen.getByTestId('game-map')).toHaveStyle('opacity: 1');
@@ -174,7 +176,7 @@ describe('GameMap', () => {
 
   it('handles character prop changes without crashing', () => {
     const { rerender } = render(<GameMap {...mockProps} />);
-    
+
     // キャラクターリストを変更
     const updatedCharacters: Character[] = [
       ...mockCharacters,
@@ -183,21 +185,21 @@ describe('GameMap', () => {
         name: 'New Character',
         description: 'Newly added character',
         imageUrl: '/test3.png',
-        position: { lat: 35.6900, lng: 139.7000 },
+        position: { lat: 35.69, lng: 139.7 },
         difficulty: 'hard' as const,
-        isFound: false
-      }
+        isFound: false,
+      },
     ];
 
     rerender(<GameMap {...mockProps} characters={updatedCharacters} />);
-    
+
     // Verify the component still renders correctly after prop change
     expect(screen.getByTestId('game-map')).toBeInTheDocument();
   });
 
   it('unmounts without errors', () => {
     const { unmount } = render(<GameMap {...mockProps} />);
-    
+
     // Component should unmount cleanly
     expect(() => unmount()).not.toThrow();
   });
@@ -205,7 +207,7 @@ describe('GameMap', () => {
   describe('accessibility', () => {
     it('has proper ARIA labels and structure', () => {
       render(<GameMap {...mockProps} />);
-      
+
       // Testing Library推奨のアプローチでコンテナーを確認
       const mapContainer = screen.getByTestId('game-map');
       expect(mapContainer).toBeInTheDocument();
@@ -215,7 +217,7 @@ describe('GameMap', () => {
   describe('responsive behavior', () => {
     it('adjusts to different screen sizes', () => {
       render(<GameMap {...mockProps} />);
-      
+
       // Testing Library推奨のアプローチでスタイルを確認
       const mapContainer = screen.getByTestId('game-map');
       expect(mapContainer).toHaveStyle('width: 100%');

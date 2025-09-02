@@ -5,21 +5,31 @@ import { StreetViewPanel } from './components/StreetViewPanel';
 import { SearchPanel } from './components/SearchPanel';
 import { CharacterSelector } from './components/CharacterSelector';
 import GoogleMapsLoader from './components/GoogleMapsLoader';
-import { generateRandomCharacterPositions, calculateGameStats, isGameComplete } from './utils/gameUtils';
+import {
+  generateRandomCharacterPositions,
+  calculateGameStats,
+  isGameComplete,
+} from './utils/gameUtils';
 import './App.css';
 
 function App() {
   const [gameCharacters, setGameCharacters] = useState<Character[]>([]);
-  const [selectedPosition, setSelectedPosition] = useState<google.maps.LatLngLiteral | null>(null);
+  const [selectedPosition, setSelectedPosition] =
+    useState<google.maps.LatLngLiteral | null>(null);
   const [showStreetView, setShowStreetView] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [showCharacterSelector, setShowCharacterSelector] = useState(true);
   const [currentMap, setCurrentMap] = useState<google.maps.Map | null>(null);
-  
+
   // ゲーム状態
   const [gameStarted, setGameStarted] = useState(false);
   const [showHints, setShowHints] = useState(false);
-  const [gameStats, setGameStats] = useState({ total: 0, found: 0, remaining: 0, progress: 0 });
+  const [gameStats, setGameStats] = useState({
+    total: 0,
+    found: 0,
+    remaining: 0,
+    progress: 0,
+  });
 
   const handleCharactersSelect = useCallback((characters: Character[]) => {
     // キャラクターを選択したらゲームを開始
@@ -34,24 +44,26 @@ function App() {
     if (gameCharacters.length > 0) {
       const stats = calculateGameStats(gameCharacters);
       setGameStats(stats);
-      
+
       // ゲームクリアチェック
       if (isGameComplete(gameCharacters)) {
-        alert(`🎉 ゲームクリア！\n全${stats.total}体のキャラクターを発見しました！`);
+        alert(
+          `🎉 ゲームクリア！\n全${stats.total}体のキャラクターを発見しました！`
+        );
       }
     }
   }, [gameCharacters]);
 
   const handleCharacterFound = useCallback((character: Character) => {
     console.log('Character found:', character);
-    
+
     // キャラクターを発見済みに更新
-    setGameCharacters(prev => prev.map(char => 
-      char.id === character.id 
-        ? { ...char, isFound: true }
-        : char
-    ));
-    
+    setGameCharacters(prev =>
+      prev.map(char =>
+        char.id === character.id ? { ...char, isFound: true } : char
+      )
+    );
+
     alert(`🎉 ${character.name}を発見しました！\n${character.description}`);
   }, []);
 
@@ -64,16 +76,19 @@ function App() {
     setShowStreetView(true);
   }, []);
 
-  const handleLocationSelect = useCallback((position: google.maps.LatLngLiteral) => {
-    // 検索で選択した場合はマップを中心に移動し、ストリートビューは表示しない
-    if (currentMap) {
-      currentMap.setCenter(position);
-      currentMap.setZoom(15); // ズームレベルを上げて詳細表示
-    }
-    setSelectedPosition(position);
-    setShowSearch(false);
-    // ストリートビューは表示しない
-  }, [currentMap]);
+  const handleLocationSelect = useCallback(
+    (position: google.maps.LatLngLiteral) => {
+      // 検索で選択した場合はマップを中心に移動し、ストリートビューは表示しない
+      if (currentMap) {
+        currentMap.setCenter(position);
+        currentMap.setZoom(15); // ズームレベルを上げて詳細表示
+      }
+      setSelectedPosition(position);
+      setShowSearch(false);
+      // ストリートビューは表示しない
+    },
+    [currentMap]
+  );
 
   const handleMapReady = useCallback((map: google.maps.Map) => {
     setCurrentMap(map);
@@ -83,12 +98,14 @@ function App() {
     <div className="App">
       <header className="App-header">
         <h1>🌍 地球全体でかくれんぼ</h1>
-        
+
         {gameStarted && (
           <div className="game-stats">
             <div className="stats-item">
               <span className="stats-label">進捗:</span>
-              <span className="stats-value">{gameStats.found}/{gameStats.total} ({gameStats.progress}%)</span>
+              <span className="stats-value">
+                {gameStats.found}/{gameStats.total} ({gameStats.progress}%)
+              </span>
             </div>
             <div className="stats-item">
               <span className="stats-label">残り:</span>
@@ -96,7 +113,7 @@ function App() {
             </div>
           </div>
         )}
-        
+
         <div className="header-controls">
           <button
             className="control-button"
@@ -104,7 +121,7 @@ function App() {
           >
             🔍 検索
           </button>
-          
+
           {!gameStarted && (
             <button
               className="control-button"
@@ -113,7 +130,7 @@ function App() {
               👾 ゲーム開始
             </button>
           )}
-          
+
           {gameStarted && (
             <button
               className="control-button"
@@ -123,7 +140,7 @@ function App() {
               💡 {showHints ? 'ヒント非表示' : 'ヒント表示'}
             </button>
           )}
-          
+
           <button
             className="control-button"
             onClick={() => setShowStreetView(!showStreetView)}
@@ -150,30 +167,30 @@ function App() {
               />
             </div>
 
-          <div className="panels-container">
-            {showSearch && (
-              <div className="panel">
-                <SearchPanel
-                  map={currentMap}
-                  onLocationSelect={handleLocationSelect}
-                  onClose={() => setShowSearch(false)}
-                  isVisible={showSearch}
-                />
-              </div>
-            )}
+            <div className="panels-container">
+              {showSearch && (
+                <div className="panel">
+                  <SearchPanel
+                    map={currentMap}
+                    onLocationSelect={handleLocationSelect}
+                    onClose={() => setShowSearch(false)}
+                    isVisible={showSearch}
+                  />
+                </div>
+              )}
 
-            {showStreetView && selectedPosition && (
-              <div className="panel">
-                <StreetViewPanel
-                  position={selectedPosition}
-                  isVisible={showStreetView}
-                  onClose={() => setShowStreetView(false)}
-                  characters={gameCharacters}
-                  onCharacterFound={handleCharacterFound}
-                />
-              </div>
-            )}
-          </div>
+              {showStreetView && selectedPosition && (
+                <div className="panel">
+                  <StreetViewPanel
+                    position={selectedPosition}
+                    isVisible={showStreetView}
+                    onClose={() => setShowStreetView(false)}
+                    characters={gameCharacters}
+                    onCharacterFound={handleCharacterFound}
+                  />
+                </div>
+              )}
+            </div>
           </div>
         </GoogleMapsLoader>
 

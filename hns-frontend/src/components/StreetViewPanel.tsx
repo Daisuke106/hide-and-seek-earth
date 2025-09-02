@@ -19,12 +19,15 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
   onClose,
   title = 'ストリートビュー',
   characters = [],
-  onCharacterFound
+  onCharacterFound,
 }) => {
   const streetViewElementRef = useRef<HTMLDivElement>(null);
-  const { streetView, isLoading, error, initializeStreetView, updatePosition } = useStreetView();
+  const { streetView, isLoading, error, initializeStreetView, updatePosition } =
+    useStreetView();
   const [isInitialized, setIsInitialized] = useState(false);
-  const [streetViewCharacters, setStreetViewCharacters] = useState<Character[]>([]);
+  const [streetViewCharacters, setStreetViewCharacters] = useState<Character[]>(
+    []
+  );
 
   // ストリートビューの初期化
   useEffect(() => {
@@ -45,7 +48,10 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
   // キャラクターの位置をランダムに生成
   useEffect(() => {
     if (position && characters.length > 0) {
-      const randomizedCharacters = generateCharacterStreetViewPositions(characters, position);
+      const randomizedCharacters = generateCharacterStreetViewPositions(
+        characters,
+        position
+      );
       setStreetViewCharacters(randomizedCharacters);
     }
   }, [position, characters]);
@@ -59,7 +65,11 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
       <div className="street-view-header">
         <h3 className="street-view-title">{title}</h3>
         {onClose && (
-          <button className="street-view-close" onClick={onClose} aria-label="閉じる">
+          <button
+            className="street-view-close"
+            onClick={onClose}
+            aria-label="閉じる"
+          >
             ×
           </button>
         )}
@@ -86,24 +96,28 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
             <div className="street-view-error">
               <h4>ストリートビューエラー</h4>
               <p>{error}</p>
-              <p>この場所ではストリートビューが利用できない可能性があります。</p>
+              <p>
+                この場所ではストリートビューが利用できない可能性があります。
+              </p>
             </div>
           )}
 
           {!position && (
             <div className="street-view-placeholder">
               <h4>位置を選択してください</h4>
-              <p>マップ上の場所をクリックするとストリートビューが表示されます。</p>
+              <p>
+                マップ上の場所をクリックするとストリートビューが表示されます。
+              </p>
             </div>
           )}
 
-          <div 
+          <div
             ref={streetViewElementRef}
             className="street-view"
-            style={{ 
-              display: (!isLoading && !error && position) ? 'block' : 'none',
+            style={{
+              display: !isLoading && !error && position ? 'block' : 'none',
               width: '100%',
-              height: '100%'
+              height: '100%',
             }}
           />
         </div>
@@ -112,9 +126,11 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
       <div className="street-view-controls">
         <div className="control-group">
           <span className="control-label">操作:</span>
-          <span className="control-hint">ドラッグで視点変更 | マウスホイールでズーム</span>
+          <span className="control-hint">
+            ドラッグで視点変更 | マウスホイールでズーム
+          </span>
         </div>
-        
+
         {streetViewCharacters.length > 0 && (
           <div className="character-hints">
             <h4>🎯 この周辺に隠れているキャラクター:</h4>
@@ -124,19 +140,22 @@ export const StreetViewPanel: React.FC<StreetViewPanelProps> = ({
                 .map(character => (
                   <div key={character.id} className="character-hint">
                     <span className="character-name">{character.name}</span>
-                    <span className={`difficulty-badge ${character.difficulty}`}>
+                    <span
+                      className={`difficulty-badge ${character.difficulty}`}
+                    >
                       {character.difficulty}
                     </span>
                     <button
                       className="discovery-button"
-                      onClick={() => onCharacterFound && onCharacterFound(character)}
+                      onClick={() =>
+                        onCharacterFound && onCharacterFound(character)
+                      }
                       disabled={character.isFound}
                     >
                       {character.isFound ? '発見済み' : '発見！'}
                     </button>
                   </div>
-                ))
-              }
+                ))}
             </div>
             <p className="hint-text">
               💡 ヒント: 周りを見回してキャラクターを探してみてください！

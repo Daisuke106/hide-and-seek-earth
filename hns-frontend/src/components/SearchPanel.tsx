@@ -14,7 +14,7 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
   map,
   onLocationSelect,
   onClose,
-  isVisible
+  isVisible,
 }) => {
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<SearchResult[]>([]);
@@ -34,12 +34,15 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     try {
       const searchResults = await googleMapsService.searchPlaces(query, map);
       setResults(searchResults);
-      
+
       if (searchResults.length === 0) {
-        setError('検索結果が見つかりませんでした。別のキーワードで試してください。');
+        setError(
+          '検索結果が見つかりませんでした。別のキーワードで試してください。'
+        );
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '検索中にエラーが発生しました';
+      const errorMessage =
+        err instanceof Error ? err.message : '検索中にエラーが発生しました';
       setError(errorMessage);
       setResults([]);
       console.error('Search error:', err);
@@ -48,44 +51,55 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
     }
   }, [query, map]);
 
-  const handleLocationClick = useCallback((result: SearchResult) => {
-    onLocationSelect(result.position);
-    setQuery(result.name);
-    setResults([]);
-    setSelectedIndex(-1);
-  }, [onLocationSelect]);
+  const handleLocationClick = useCallback(
+    (result: SearchResult) => {
+      onLocationSelect(result.position);
+      setQuery(result.name);
+      setResults([]);
+      setSelectedIndex(-1);
+    },
+    [onLocationSelect]
+  );
 
-  const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (!results.length) return;
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (!results.length) return;
 
-    switch (event.key) {
-      case 'ArrowDown':
-        event.preventDefault();
-        setSelectedIndex(prev => (prev < results.length - 1 ? prev + 1 : prev));
-        break;
-      case 'ArrowUp':
-        event.preventDefault();
-        setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
-        break;
-      case 'Enter':
-        event.preventDefault();
-        if (selectedIndex >= 0 && selectedIndex < results.length) {
-          handleLocationClick(results[selectedIndex]);
-        } else {
-          handleSearch();
-        }
-        break;
-      case 'Escape':
-        setResults([]);
-        setSelectedIndex(-1);
-        break;
-    }
-  }, [results, selectedIndex, handleLocationClick, handleSearch]);
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          setSelectedIndex(prev =>
+            prev < results.length - 1 ? prev + 1 : prev
+          );
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          setSelectedIndex(prev => (prev > 0 ? prev - 1 : -1));
+          break;
+        case 'Enter':
+          event.preventDefault();
+          if (selectedIndex >= 0 && selectedIndex < results.length) {
+            handleLocationClick(results[selectedIndex]);
+          } else {
+            handleSearch();
+          }
+          break;
+        case 'Escape':
+          setResults([]);
+          setSelectedIndex(-1);
+          break;
+      }
+    },
+    [results, selectedIndex, handleLocationClick, handleSearch]
+  );
 
-  const handleInputChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
-    setQuery(event.target.value);
-    setError(null);
-  }, []);
+  const handleInputChange = useCallback(
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      setQuery(event.target.value);
+      setError(null);
+    },
+    []
+  );
 
   const clearSearch = useCallback(() => {
     setQuery('');
@@ -117,7 +131,11 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
       <div className="search-header">
         <h3 className="search-title">場所を検索</h3>
         {onClose && (
-          <button className="search-close" onClick={onClose} aria-label="閉じる">
+          <button
+            className="search-close"
+            onClick={onClose}
+            aria-label="閉じる"
+          >
             ×
           </button>
         )}
@@ -180,7 +198,8 @@ export const SearchPanel: React.FC<SearchPanelProps> = ({
                     <div className="result-name">{result.name}</div>
                     <div className="result-address">{result.address}</div>
                     <div className="result-coords">
-                      {result.position.lat.toFixed(6)}, {result.position.lng.toFixed(6)}
+                      {result.position.lat.toFixed(6)},{' '}
+                      {result.position.lng.toFixed(6)}
                     </div>
                   </div>
                 </li>

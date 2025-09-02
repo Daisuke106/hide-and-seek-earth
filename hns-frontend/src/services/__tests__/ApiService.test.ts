@@ -9,7 +9,7 @@ const mockCharacter: Character = {
   imageUrl: '/test-image.png',
   position: { lat: 35.6762, lng: 139.6503 },
   difficulty: 'easy',
-  isFound: false
+  isFound: false,
 };
 
 const mockGameSession: GameSession = {
@@ -18,7 +18,7 @@ const mockGameSession: GameSession = {
   startTime: new Date(),
   foundCharacters: [],
   totalScore: 0,
-  isCompleted: false
+  isCompleted: false,
 };
 
 // Fetch APIのモック
@@ -35,7 +35,7 @@ describe('ApiService', () => {
       // モックレスポンス
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockCharacter]
+        json: async () => [mockCharacter],
       });
 
       const result = await apiService.getCharacters();
@@ -45,8 +45,8 @@ describe('ApiService', () => {
         expect.objectContaining({
           headers: expect.objectContaining({
             'Content-Type': 'application/json',
-            'Accept': 'application/json'
-          })
+            Accept: 'application/json',
+          }),
         })
       );
       expect(result).toEqual([mockCharacter]);
@@ -56,7 +56,7 @@ describe('ApiService', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        statusText: 'Internal Server Error'
+        statusText: 'Internal Server Error',
       });
 
       await expect(apiService.getCharacters()).rejects.toThrow(
@@ -69,7 +69,7 @@ describe('ApiService', () => {
     it('should fetch random characters with default count', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockCharacter]
+        json: async () => [mockCharacter],
       });
 
       const result = await apiService.getRandomCharacters();
@@ -84,7 +84,7 @@ describe('ApiService', () => {
     it('should fetch random characters with custom count', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockCharacter]
+        json: async () => [mockCharacter],
       });
 
       await apiService.getRandomCharacters(3);
@@ -100,7 +100,7 @@ describe('ApiService', () => {
     it('should create game session successfully', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => mockGameSession
+        json: async () => mockGameSession,
       });
 
       const result = await apiService.createGameSession([1, 2, 3]);
@@ -111,8 +111,8 @@ describe('ApiService', () => {
           method: 'POST',
           body: JSON.stringify({ characterIds: [1, 2, 3] }),
           headers: expect.objectContaining({
-            'Content-Type': 'application/json'
-          })
+            'Content-Type': 'application/json',
+          }),
         })
       );
       expect(result).toEqual(mockGameSession);
@@ -124,16 +124,19 @@ describe('ApiService', () => {
       const updatedSession = { ...mockGameSession, foundCharacters: [1] };
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => updatedSession
+        json: async () => updatedSession,
       });
 
-      const result = await apiService.markCharacterAsFound('test-session-id', 1);
+      const result = await apiService.markCharacterAsFound(
+        'test-session-id',
+        1
+      );
 
       expect(mockFetch).toHaveBeenCalledWith(
         'http://localhost:8000/api/game-sessions/test-session-id/found',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ characterId: 1 })
+          body: JSON.stringify({ characterId: 1 }),
         })
       );
       expect(result).toEqual(updatedSession);
@@ -145,7 +148,7 @@ describe('ApiService', () => {
       const healthResponse = { status: 'ok' };
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        json: async () => healthResponse
+        json: async () => healthResponse,
       });
 
       const result = await apiService.healthCheck();
@@ -169,7 +172,7 @@ describe('ApiService', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 404,
-        statusText: 'Not Found'
+        statusText: 'Not Found',
       });
 
       await expect(apiService.getCharacters()).rejects.toThrow(

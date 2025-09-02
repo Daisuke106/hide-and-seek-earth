@@ -30,15 +30,15 @@ beforeAll(() => {
       Size: jest.fn((width, height) => ({ width, height })),
       Point: jest.fn((x, y) => ({ x, y })),
       MapTypeId: {
-        ROADMAP: 'roadmap'
+        ROADMAP: 'roadmap',
       },
       Animation: {
-        BOUNCE: 'BOUNCE'
+        BOUNCE: 'BOUNCE',
       },
       event: {
-        removeListener: jest.fn()
-      }
-    }
+        removeListener: jest.fn(),
+      },
+    },
   };
 });
 
@@ -48,8 +48,8 @@ jest.mock('./hooks/useGoogleMaps', () => ({
     map: mockMap,
     isLoading: false,
     error: null,
-    initializeMap: jest.fn().mockResolvedValue(undefined)
-  })
+    initializeMap: jest.fn().mockResolvedValue(undefined),
+  }),
 }));
 
 test('renders app title', () => {

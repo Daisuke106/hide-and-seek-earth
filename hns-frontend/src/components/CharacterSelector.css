@@ -188,8 +188,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .retry-button {
@@ -230,7 +234,7 @@
 }
 
 .character-card.selected {
-  border-color: #4CAF50;
+  border-color: #4caf50;
   background: #f8fff8;
 }
 
@@ -255,7 +259,7 @@
   position: absolute;
   top: 8px;
   right: 8px;
-  background: #4CAF50;
+  background: #4caf50;
   border-radius: 50%;
   width: 24px;
   height: 24px;
@@ -304,7 +308,7 @@
 
 .found-badge {
   background: #e8f5e8;
-  color: #4CAF50;
+  color: #4caf50;
   padding: 4px 8px;
   border-radius: 12px;
   font-size: 12px;
@@ -379,7 +383,7 @@
 
 .confirm-button {
   width: 100%;
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   border: none;
   padding: 16px;

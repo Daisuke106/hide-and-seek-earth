@@ -14,17 +14,17 @@ beforeAll(() => {
     maps: {
       Map: jest.fn(() => mockMap),
       MapTypeId: {
-        ROADMAP: 'roadmap'
-      }
-    }
+        ROADMAP: 'roadmap',
+      },
+    },
   };
 });
 
 // GoogleMapsServiceのモック
 jest.mock('../../services/GoogleMapsService', () => ({
   googleMapsService: {
-    createMap: jest.fn()
-  }
+    createMap: jest.fn(),
+  },
 }));
 
 // HTMLElementのモック
@@ -33,13 +33,13 @@ const mockElement = document.createElement('div');
 describe('useGoogleMaps', () => {
   // console.error のモック
   const originalConsoleError = console.error;
-  
+
   beforeEach(() => {
     jest.clearAllMocks();
     // テスト中のコンソールエラーを抑制
     console.error = jest.fn();
   });
-  
+
   afterAll(() => {
     // テスト終了後にconsole.errorを復元
     console.error = originalConsoleError;
@@ -57,8 +57,8 @@ describe('useGoogleMaps', () => {
 
     it('should initialize with custom settings', () => {
       const initialSettings = {
-        center: { lat: 40.7128, lng: -74.0060 }, // New York
-        zoom: 12
+        center: { lat: 40.7128, lng: -74.006 }, // New York
+        zoom: 12,
       };
 
       const { result } = renderHook(() => useGoogleMaps(initialSettings));
@@ -156,8 +156,8 @@ describe('useGoogleMaps', () => {
       (googleMapsService.createMap as jest.Mock).mockResolvedValue(mockMap);
 
       const customSettings = {
-        center: { lat: 40.7128, lng: -74.0060 },
-        zoom: 15
+        center: { lat: 40.7128, lng: -74.006 },
+        zoom: 15,
       };
 
       const { result } = renderHook(() => useGoogleMaps(customSettings));
@@ -225,7 +225,7 @@ describe('useGoogleMaps', () => {
         new Error('Network error'),
         'String error message',
         { message: 'Object error' },
-        null
+        null,
       ];
 
       for (const error of errorCases) {

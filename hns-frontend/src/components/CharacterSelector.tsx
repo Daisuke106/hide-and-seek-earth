@@ -20,14 +20,18 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   isVisible,
   maxSelection = 5,
   minSelection = 1,
-  title = "キャラクターを選択",
-  description
+  title = 'キャラクターを選択',
+  description,
 }) => {
-  const [availableCharacters, setAvailableCharacters] = useState<Character[]>([]);
+  const [availableCharacters, setAvailableCharacters] = useState<Character[]>(
+    []
+  );
   const [selectedCharacters, setSelectedCharacters] = useState<Character[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>('all');
+  const [filter, setFilter] = useState<'all' | 'easy' | 'medium' | 'hard'>(
+    'all'
+  );
 
   // キャラクター一覧の取得
   const loadCharacters = useCallback(async () => {
@@ -39,7 +43,10 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
       console.log('Loaded characters:', characters);
       setAvailableCharacters(characters);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'キャラクターの読み込みに失敗しました';
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'キャラクターの読み込みに失敗しました';
       setError(errorMessage);
       console.error('Failed to load characters:', err);
     } finally {
@@ -50,13 +57,16 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   // フィルタリング済みキャラクター取得
   const getFilteredCharacters = useCallback(() => {
     console.log('Filtering characters:', { availableCharacters, filter });
-    
+
     // availableCharactersが配列でない場合のガード
     if (!Array.isArray(availableCharacters)) {
-      console.error('availableCharacters is not an array:', availableCharacters);
+      console.error(
+        'availableCharacters is not an array:',
+        availableCharacters
+      );
       return [];
     }
-    
+
     if (filter === 'all') {
       return availableCharacters;
     }
@@ -72,20 +82,23 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   }, [getFilteredCharacters, maxSelection]);
 
   // キャラクター選択の切り替え
-  const toggleCharacterSelection = useCallback((character: Character) => {
-    setSelectedCharacters(prev => {
-      const isSelected = prev.find(c => c.id === character.id);
-      
-      if (isSelected) {
-        return prev.filter(c => c.id !== character.id);
-      } else {
-        if (prev.length >= maxSelection) {
-          return prev; // 最大選択数に達している場合は変更しない
+  const toggleCharacterSelection = useCallback(
+    (character: Character) => {
+      setSelectedCharacters(prev => {
+        const isSelected = prev.find(c => c.id === character.id);
+
+        if (isSelected) {
+          return prev.filter(c => c.id !== character.id);
+        } else {
+          if (prev.length >= maxSelection) {
+            return prev; // 最大選択数に達している場合は変更しない
+          }
+          return [...prev, character];
         }
-        return [...prev, character];
-      }
-    });
-  }, [maxSelection]);
+      });
+    },
+    [maxSelection]
+  );
 
   // 選択の確定
   const handleConfirmSelection = useCallback(() => {
@@ -109,20 +122,28 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   // 難易度に応じた色を取得
   const getDifficultyColor = (difficulty: string): string => {
     switch (difficulty) {
-      case 'easy': return '#4CAF50';
-      case 'medium': return '#FF9800';
-      case 'hard': return '#f44336';
-      default: return '#9E9E9E';
+      case 'easy':
+        return '#4CAF50';
+      case 'medium':
+        return '#FF9800';
+      case 'hard':
+        return '#f44336';
+      default:
+        return '#9E9E9E';
     }
   };
 
   // 難易度に応じた日本語ラベルを取得
   const getDifficultyLabel = (difficulty: string): string => {
     switch (difficulty) {
-      case 'easy': return '簡単';
-      case 'medium': return '普通';
-      case 'hard': return '難しい';
-      default: return '不明';
+      case 'easy':
+        return '簡単';
+      case 'medium':
+        return '普通';
+      case 'hard':
+        return '難しい';
+      default:
+        return '不明';
     }
   };
 
@@ -131,14 +152,20 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
   }
 
   const filteredCharacters = getFilteredCharacters();
-  const canConfirm = selectedCharacters.length >= minSelection && selectedCharacters.length <= maxSelection;
+  const canConfirm =
+    selectedCharacters.length >= minSelection &&
+    selectedCharacters.length <= maxSelection;
 
   return (
     <div className="character-selector">
       <div className="selector-header">
         <h2 className="selector-title">{title}</h2>
         {onClose && (
-          <button className="selector-close" onClick={onClose} aria-label="閉じる">
+          <button
+            className="selector-close"
+            onClick={onClose}
+            aria-label="閉じる"
+          >
             ×
           </button>
         )}
@@ -217,21 +244,35 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
           {!isLoading && !error && filteredCharacters.length > 0 && (
             <div className="characters-grid">
               {filteredCharacters.map(character => {
-                const isSelected = selectedCharacters.find(c => c.id === character.id);
-                const isSelectable = !isSelected && selectedCharacters.length < maxSelection;
-                
+                const isSelected = selectedCharacters.find(
+                  c => c.id === character.id
+                );
+                const isSelectable =
+                  !isSelected && selectedCharacters.length < maxSelection;
+
                 return (
                   <div
                     key={character.id}
                     className={`character-card ${isSelected ? 'selected' : ''} ${!isSelectable && !isSelected ? 'disabled' : ''}`}
-                    onClick={() => (isSelectable || isSelected) && toggleCharacterSelection(character)}
+                    onClick={() =>
+                      (isSelectable || isSelected) &&
+                      toggleCharacterSelection(character)
+                    }
                   >
                     <div className="character-image">
-                      <img 
-                        src={character.imageUrl ? getCharacterImageUrl(character.imageUrl) : getPlaceholderImage(character.name, character.difficulty)} 
+                      <img
+                        src={
+                          character.imageUrl
+                            ? getCharacterImageUrl(character.imageUrl)
+                            : getPlaceholderImage(
+                                character.name,
+                                character.difficulty
+                              )
+                        }
                         alt={character.name}
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src = '/icons/default-character.png';
+                        onError={e => {
+                          (e.target as HTMLImageElement).src =
+                            '/icons/default-character.png';
                         }}
                       />
                       {isSelected && (
@@ -240,15 +281,21 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                         </div>
                       )}
                     </div>
-                    
+
                     <div className="character-info">
                       <h3 className="character-name">{character.name}</h3>
-                      <p className="character-description">{character.description}</p>
-                      
+                      <p className="character-description">
+                        {character.description}
+                      </p>
+
                       <div className="character-meta">
-                        <span 
+                        <span
                           className="difficulty-badge"
-                          style={{ backgroundColor: getDifficultyColor(character.difficulty) }}
+                          style={{
+                            backgroundColor: getDifficultyColor(
+                              character.difficulty
+                            ),
+                          }}
                         >
                           {getDifficultyLabel(character.difficulty)}
                         </span>
@@ -270,8 +317,15 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
             <div className="selected-list">
               {selectedCharacters.map(character => (
                 <div key={character.id} className="selected-item">
-                  <img 
-                    src={character.imageUrl ? getCharacterImageUrl(character.imageUrl) : getPlaceholderImage(character.name, character.difficulty)} 
+                  <img
+                    src={
+                      character.imageUrl
+                        ? getCharacterImageUrl(character.imageUrl)
+                        : getPlaceholderImage(
+                            character.name,
+                            character.difficulty
+                          )
+                    }
                     alt={character.name}
                     className="selected-avatar"
                   />

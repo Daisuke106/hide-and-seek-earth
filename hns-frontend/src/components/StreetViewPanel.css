@@ -93,8 +93,12 @@
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 .street-view-loading p {
@@ -219,11 +223,11 @@
 }
 
 .difficulty-badge.easy {
-  background-color: #4CAF50;
+  background-color: #4caf50;
 }
 
 .difficulty-badge.medium {
-  background-color: #FF9800;
+  background-color: #ff9800;
 }
 
 .difficulty-badge.hard {
@@ -239,7 +243,7 @@
 }
 
 .discovery-button {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
   border: none;
   padding: 6px 12px;
