@@ -52,6 +52,10 @@
   },
   "overrides": {
     "nth-check": ">=2.0.1",
-    "postcss": ">=8.4.31"
+    "postcss": ">=8.4.31",
+    "webpack-dev-server": "4.15.2"
+  },
+  "resolutions": {
+    "webpack-dev-server": "4.15.2"
   }
 }
