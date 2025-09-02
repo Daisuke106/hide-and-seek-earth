@@ -31,6 +31,12 @@ class GameSession extends Model
         'game_data' => 'array',
     ];
 
+    protected $attributes = [
+        'found_characters' => '[]',
+        'total_score' => 0,
+        'is_completed' => false,
+    ];
+
     protected $appends = [
         'characters'
     ];

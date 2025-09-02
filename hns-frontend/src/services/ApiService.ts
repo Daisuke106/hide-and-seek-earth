@@ -11,27 +11,52 @@ interface LeaderboardEntry {
 const API_BASE_URL =
   process.env.REACT_APP_API_URL || 'http://localhost:8000/api';
 
+console.log('API Configuration:', {
+  API_BASE_URL,
+  NODE_ENV: process.env.NODE_ENV,
+  API_URL_ENV: process.env.REACT_APP_API_URL,
+});
+
 class ApiService {
   private async fetchJson<T>(
     endpoint: string,
     options?: RequestInit
   ): Promise<T> {
-    const response = await fetch(`${API_BASE_URL}${endpoint}`, {
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-        ...options?.headers,
-      },
-      ...options,
-    });
+    const url = `${API_BASE_URL}${endpoint}`;
+    console.log(`API Request: ${options?.method || 'GET'} ${url}`);
 
-    if (!response.ok) {
-      throw new Error(
-        `API request failed: ${response.status} ${response.statusText}`
-      );
+    try {
+      const response = await fetch(url, {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json',
+          ...options?.headers,
+        },
+        ...options,
+      });
+
+      console.log(`API Response: ${response.status} ${response.statusText}`);
+
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(
+          `API request failed: ${response.status} ${response.statusText}. Response: ${errorText}`
+        );
+      }
+
+      const data = await response.json();
+      console.log('API Response data:', data);
+      return data;
+    } catch (error) {
+      console.error('API Request Error:', error);
+      // ネットワーク接続エラーの場合は特別な処理
+      if (error instanceof TypeError && error.message.includes('fetch')) {
+        throw new Error(
+          'Network connection error. Make sure the backend server is running.'
+        );
+      }
+      throw error;
     }
-
-    return response.json();
   }
 
   // キャラクター関連のAPI
@@ -63,7 +88,7 @@ class ApiService {
   async createGameSession(characterIds: number[]): Promise<GameSession> {
     return this.fetchJson<GameSession>('/game-sessions', {
       method: 'POST',
-      body: JSON.stringify({ characterIds }),
+      body: JSON.stringify({ character_ids: characterIds }),
     });
   }
 
@@ -87,7 +112,7 @@ class ApiService {
   ): Promise<GameSession> {
     return this.fetchJson<GameSession>(`/game-sessions/${sessionId}/found`, {
       method: 'POST',
-      body: JSON.stringify({ characterId }),
+      body: JSON.stringify({ character_id: characterId }),
     });
   }
 
