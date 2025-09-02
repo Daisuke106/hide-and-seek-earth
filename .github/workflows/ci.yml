@@ -14,6 +14,8 @@ jobs:
   # Laravel Backend Tests
   backend-tests:
     name: Backend Tests (PHP ${{ matrix.php }})
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     
     strategy:
