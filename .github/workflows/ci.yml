@@ -143,6 +143,8 @@ jobs:
   # Code Quality Checks
   code-quality:
     name: Code Quality
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     
     steps:
