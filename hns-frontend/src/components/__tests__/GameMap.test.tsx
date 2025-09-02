@@ -26,19 +26,19 @@ const mockInfoWindow = {
 // Google Maps APIの完全なモック
 beforeAll(() => {
   // Markerクラスをプロトタイプ付きで正しくモック
-  const MockMarker = function(this: any, options: any) {
+  const MockMarker = function (this: any, options: any) {
     Object.assign(this, mockMarker);
     this.options = options;
   };
   MockMarker.prototype = mockMarker;
 
-  const MockInfoWindow = function(this: any, options: any) {
+  const MockInfoWindow = function (this: any, options: any) {
     Object.assign(this, mockInfoWindow);
     this.options = options;
   };
   MockInfoWindow.prototype = mockInfoWindow;
 
-  const MockMap = function(this: any, element: any, options: any) {
+  const MockMap = function (this: any, element: any, options: any) {
     Object.assign(this, mockMap);
     this.element = element;
     this.options = options;
