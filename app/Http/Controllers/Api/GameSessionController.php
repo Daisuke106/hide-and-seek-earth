@@ -147,7 +147,8 @@ class GameSessionController extends Controller
         if ($session->is_completed) {
             return response()->json([
                 'message' => 'Game session is already completed.',
-                'session' => $session            ]);
+                'session' => $session
+            ]);
         }
 
         $session->complete();
