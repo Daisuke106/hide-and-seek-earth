@@ -271,10 +271,11 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                         }
                         alt={character.name}
                         onError={e => {
-                          (e.target as HTMLImageElement).src = getPlaceholderImage(
-                            character.name,
-                            character.difficulty
-                          );
+                          (e.target as HTMLImageElement).src =
+                            getPlaceholderImage(
+                              character.name,
+                              character.difficulty
+                            );
                         }}
                       />
                       {isSelected && (
