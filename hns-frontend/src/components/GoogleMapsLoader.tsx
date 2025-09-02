@@ -26,8 +26,8 @@ class GoogleMapsLoader extends React.Component<
     const apiKey = process.env.REACT_APP_GOOGLE_MAPS_API_KEY || '';
     if (process.env.NODE_ENV === 'development') {
       console.log(
-        'Initializing Google Maps Loader with API key:',
-        apiKey ? `${apiKey.substring(0, 10)}...` : 'Not set'
+        'Initializing Google Maps Loader.',
+        apiKey ? 'API Key is set.' : 'API Key is not set.'
       );
     }
 
