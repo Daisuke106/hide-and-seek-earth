@@ -53,18 +53,20 @@ class GameSessionControllerTest extends TestCase
 
         $response->assertStatus(201)
                  ->assertJsonStructure([
-                     'id',
-                     'session_id',
-                     'character_ids',
-                     'start_time',
-                     'found_characters',
-                     'total_score',
-                     'is_completed',
-                     'characters' => [
-                         '*' => [
-                             'id',
-                             'name',
-                             'difficulty'
+                     'data' => [
+                         'id',
+                         'session_id',
+                         'character_ids',
+                         'start_time',
+                         'found_characters',
+                         'total_score',
+                         'is_completed',
+                         'characters' => [
+                             '*' => [
+                                 'id',
+                                 'name',
+                                 'difficulty'
+                             ]
                          ]
                      ]
                  ]);
@@ -174,7 +176,7 @@ class GameSessionControllerTest extends TestCase
             'character_id' => $characterId
         ]);
 
-        $response->assertStatus(200)
+        $response->assertStatus(400)
                  ->assertJsonFragment(['message' => 'Character already found.']);
     }
 
@@ -242,7 +244,7 @@ class GameSessionControllerTest extends TestCase
 
         $response = $this->postJson("/api/game-sessions/{$session->session_id}/complete");
 
-        $response->assertStatus(200)
+        $response->assertStatus(400)
                  ->assertJsonFragment(['message' => 'Game session is already completed.']);
     }
 
