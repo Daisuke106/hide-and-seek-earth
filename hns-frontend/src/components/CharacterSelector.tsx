@@ -273,8 +273,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                     <div className="character-image">
                       <img
                         src={
-                          character.imageUrl
-                            ? getCharacterImageUrl(character.imageUrl)
+                          character.image_url
+                            ? getCharacterImageUrl(character.image_url)
                             : getPlaceholderImage(
                                 character.name,
                                 character.difficulty
@@ -333,8 +333,8 @@ export const CharacterSelector: React.FC<CharacterSelectorProps> = ({
                 <div key={character.id} className="selected-item">
                   <img
                     src={
-                      character.imageUrl
-                        ? getCharacterImageUrl(character.imageUrl)
+                      character.image_url
+                        ? getCharacterImageUrl(character.image_url)
                         : getPlaceholderImage(
                             character.name,
                             character.difficulty
