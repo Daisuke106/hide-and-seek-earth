@@ -1,0 +1,35 @@
+.header-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.header-title-link:hover {
+  opacity: 0.9;
+}
+
+.nav-link {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+}
+
+.game-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.stats-item {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.stats-label {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.stats-value {
+  font-size: 14px;
+  font-weight: 600;
+}
