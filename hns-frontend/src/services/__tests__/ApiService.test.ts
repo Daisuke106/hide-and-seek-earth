@@ -6,7 +6,7 @@ const mockCharacter: Character = {
   id: 1,
   name: 'Test Character',
   description: 'A test character for testing purposes',
-  imageUrl: '/test-image.png',
+  image_url: '/test-image.png',
   position: { lat: 35.6762, lng: 139.6503 },
   difficulty: 'easy',
   isFound: false,

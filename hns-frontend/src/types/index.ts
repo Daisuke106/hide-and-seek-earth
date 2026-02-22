@@ -4,7 +4,7 @@ export interface Character {
   id: number;
   name: string;
   description: string;
-  imageUrl: string;
+  image_url: string | null;
   position: {
     lat: number;
     lng: number;
