@@ -3,127 +3,76 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\Character;
-use Illuminate\Http\Request;
+use App\Http\Requests\Character\IndexCharacterRequest;
+use App\Http\Requests\Character\StoreCharacterRequest;
+use App\Http\Requests\Character\UpdateCharacterRequest;
+use App\Http\Requests\Character\RandomCharacterRequest;
+use App\Http\Resources\CharacterResource;
+use App\Http\Resources\CharacterCollection;
+use App\Services\CharacterService;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Http\JsonResponse;
-use Illuminate\Validation\Rule;
 
 class CharacterController extends Controller
 {
+    public function __construct(
+        private CharacterService $characterService
+    ) {}
+
     /**
      * キャラクター一覧を取得
      */
-    public function index(Request $request): JsonResponse
+    public function index(IndexCharacterRequest $request): CharacterCollection|JsonResponse
     {
-        $query = Character::active();
+        $result = $this->characterService->getActiveCharacters($request->validated());
 
-        // 難易度フィルター
-        if ($request->has('difficulty')) {
-            $query->difficulty($request->difficulty);
+        if ($result instanceof LengthAwarePaginator) {
+            return new CharacterCollection($result);
         }
 
-        // 境界内のキャラクターフィルター
-        if ($request->has('bounds')) {
-            $bounds = $request->bounds;
-            if (isset($bounds['north_east']) && isset($bounds['south_west'])) {
-                $query->withinBounds($bounds['north_east'], $bounds['south_west']);
-            }
-        }
-
-        // 並び順
-        $sortBy = $request->get('sort_by', 'id');
-        $sortOrder = $request->get('sort_order', 'asc');
-        
-        if ($sortBy === 'random') {
-            $query->inRandomOrder();
-        } else {
-            $query->orderBy($sortBy, $sortOrder);
-        }
-
-        // ページネーションまたはリミット
-        $limit = $request->get('limit');
-        if ($limit) {
-            $characters = $query->limit($limit)->get();
-        } else {
-            $characters = $query->paginate($request->get('per_page', 15));
-        }
-
-        return response()->json($characters);
+        return response()->json(CharacterResource::collection($result));
     }
 
     /**
      * 指定されたキャラクターの詳細を取得
      */
-    public function show(int $id): JsonResponse
+    public function show(int $id): CharacterResource
     {
-        $character = Character::active()->findOrFail($id);
-        return response()->json($character);
+        return new CharacterResource($this->characterService->getCharacterById($id));
     }
 
     /**
      * ランダムなキャラクターを取得
      */
-    public function random(Request $request): JsonResponse
+    public function random(RandomCharacterRequest $request): JsonResponse
     {
-        $request->validate([
-            'count' => 'integer|min:1|max:50',
-            'difficulty' => ['nullable', Rule::in(['easy', 'medium', 'hard'])],
-        ]);
+        $characters = $this->characterService->getRandomCharacters(
+            $request->get('difficulty'),
+            (int) $request->get('count', 5)
+        );
 
-        $query = Character::active();
-
-        if ($request->has('difficulty')) {
-            $query->difficulty($request->difficulty);
-        }
-
-        $count = $request->get('count', 5);
-        $characters = $query->random($count)->get();
-
-        return response()->json($characters);
+        return response()->json(CharacterResource::collection($characters));
     }
 
     /**
      * 管理者用：新しいキャラクターを作成
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreCharacterRequest $request): JsonResponse
     {
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'image_url' => 'nullable|url|max:255',
-            'latitude' => 'required|numeric|between:-90,90',
-            'longitude' => 'required|numeric|between:-180,180',
-            'difficulty' => ['required', Rule::in(['easy', 'medium', 'hard'])],
-            'is_active' => 'boolean',
-            'metadata' => 'nullable|array',
-        ]);
+        $character = $this->characterService->createCharacter($request->validated());
 
-        $character = Character::create($validated);
-
-        return response()->json($character, 201);
+        return (new CharacterResource($character))
+            ->response()
+            ->setStatusCode(201);
     }
 
     /**
      * 管理者用：キャラクター情報を更新
      */
-    public function update(Request $request, int $id): JsonResponse
+    public function update(UpdateCharacterRequest $request, int $id): CharacterResource
     {
-        $character = Character::findOrFail($id);
-
-        $validated = $request->validate([
-            'name' => 'string|max:255',
-            'description' => 'nullable|string|max:1000',
-            'image_url' => 'nullable|url|max:255',
-            'latitude' => 'numeric|between:-90,90',
-            'longitude' => 'numeric|between:-180,180',
-            'difficulty' => [Rule::in(['easy', 'medium', 'hard'])],
-            'is_active' => 'boolean',
-            'metadata' => 'nullable|array',
-        ]);
-
-        $character->update($validated);
-
-        return response()->json($character);
+        $character = $this->characterService->updateCharacter($id, $request->validated());
+        return new CharacterResource($character);
     }
 
     /**
@@ -131,9 +80,7 @@ class CharacterController extends Controller
      */
     public function destroy(int $id): JsonResponse
     {
-        $character = Character::findOrFail($id);
-        $character->update(['is_active' => false]);
-
+        $this->characterService->deactivateCharacter($id);
         return response()->json(['message' => 'Character deactivated successfully']);
     }
 
@@ -142,15 +89,6 @@ class CharacterController extends Controller
      */
     public function stats(): JsonResponse
     {
-        $stats = [
-            'total' => Character::active()->count(),
-            'by_difficulty' => [
-                'easy' => Character::active()->difficulty('easy')->count(),
-                'medium' => Character::active()->difficulty('medium')->count(),
-                'hard' => Character::active()->difficulty('hard')->count(),
-            ],
-        ];
-
-        return response()->json($stats);
+        return response()->json($this->characterService->getStats());
     }
 }
