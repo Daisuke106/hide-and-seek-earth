@@ -41,9 +41,8 @@ services:
         volumes:
             - './hns-frontend/src:/app/src'
             - './hns-frontend/public:/app/public'
+            - './hns-frontend/.env:/app/.env'
         environment:
-            - REACT_APP_GOOGLE_MAPS_API_KEY=${REACT_APP_GOOGLE_MAPS_API_KEY:-}
-            - REACT_APP_API_URL=http://localhost:${APP_PORT:-8000}/api
             - WATCHPACK_POLLING=true
             - CHOKIDAR_USEPOLLING=true
         networks:
