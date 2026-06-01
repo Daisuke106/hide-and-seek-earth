@@ -146,7 +146,8 @@ class ApiService {
     characterId: number
   ): Promise<GameSession> {
     const response = await this.fetchJson<
-      { message: string; session: GameSession; character: Character } | GameSession
+      | { message: string; session: GameSession; character: Character }
+      | GameSession
     >(`/game-sessions/${sessionId}/found`, {
       method: 'POST',
       body: JSON.stringify({ character_id: characterId }),
@@ -157,7 +158,13 @@ class ApiService {
       response !== null &&
       'session' in (response as object)
     ) {
-      return (response as { message: string; session: GameSession; character: Character }).session;
+      return (
+        response as {
+          message: string;
+          session: GameSession;
+          character: Character;
+        }
+      ).session;
     }
     return response as GameSession;
   }
@@ -181,9 +188,9 @@ class ApiService {
 
   // リーダーボード関連のAPI
   async getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
-    const response = await this.fetchJson<{ data: LeaderboardEntry[] } | LeaderboardEntry[]>(
-      `/game-sessions/leaderboard?limit=${limit}`
-    );
+    const response = await this.fetchJson<
+      { data: LeaderboardEntry[] } | LeaderboardEntry[]
+    >(`/game-sessions/leaderboard?limit=${limit}`);
     const raw = this.unwrapData(response);
     return Array.isArray(raw) ? raw : [];
   }

@@ -14,10 +14,7 @@ export const HomePage: React.FC = () => {
           ストリートビューで世界を冒険しながら、隠されたキャラクターを発見しよう。
         </p>
         <div className="hero-actions">
-          <button
-            className="start-button"
-            onClick={() => navigate('/game')}
-          >
+          <button className="start-button" onClick={() => navigate('/game')}>
             🎮 ゲームを始める
           </button>
           <button

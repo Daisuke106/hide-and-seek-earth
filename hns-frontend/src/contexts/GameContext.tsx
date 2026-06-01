@@ -1,4 +1,10 @@
-import React, { createContext, useState, useCallback, useEffect, useMemo } from 'react';
+import React, {
+  createContext,
+  useState,
+  useCallback,
+  useEffect,
+  useMemo,
+} from 'react';
 import { Character } from '../types';
 import {
   generateRandomCharacterPositions,
@@ -26,7 +32,9 @@ interface GameContextType {
 
 export const GameContext = createContext<GameContextType | null>(null);
 
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+export const GameProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [gameCharacters, setGameCharacters] = useState<Character[]>([]);
   const [gameStarted, setGameStarted] = useState(false);
   const [showHints, setShowHints] = useState(false);
@@ -90,12 +98,17 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
       toggleHints,
       resetGame,
     }),
-    [gameCharacters, gameStarted, showHints, gameStats, startGame, handleCharacterFound, toggleHints, resetGame]
+    [
+      gameCharacters,
+      gameStarted,
+      showHints,
+      gameStats,
+      startGame,
+      handleCharacterFound,
+      toggleHints,
+      resetGame,
+    ]
   );
 
-  return (
-    <GameContext.Provider value={value}>
-      {children}
-    </GameContext.Provider>
-  );
+  return <GameContext.Provider value={value}>{children}</GameContext.Provider>;
 };

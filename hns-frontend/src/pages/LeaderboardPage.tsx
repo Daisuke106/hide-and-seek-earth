@@ -26,7 +26,9 @@ export const LeaderboardPage: React.FC = () => {
       setEntries(data);
     } catch (err) {
       setError(
-        err instanceof Error ? err.message : 'ランキングの読み込みに失敗しました'
+        err instanceof Error
+          ? err.message
+          : 'ランキングの読み込みに失敗しました'
       );
     } finally {
       setIsLoading(false);
@@ -65,7 +67,9 @@ export const LeaderboardPage: React.FC = () => {
 
       {!isLoading && !error && entries.length === 0 && (
         <div className="empty-state">
-          <p>まだランキングデータがありません。ゲームをプレイしてスコアを記録しよう！</p>
+          <p>
+            まだランキングデータがありません。ゲームをプレイしてスコアを記録しよう！
+          </p>
         </div>
       )}
 
@@ -83,12 +87,22 @@ export const LeaderboardPage: React.FC = () => {
               className={`table-row ${index < 3 ? `rank-${index + 1}` : ''}`}
             >
               <span className="col-rank">
-                {index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : `${index + 1}`}
+                {index === 0
+                  ? '🥇'
+                  : index === 1
+                    ? '🥈'
+                    : index === 2
+                      ? '🥉'
+                      : `${index + 1}`}
               </span>
               <span className="col-score">{entry.total_score}点</span>
-              <span className="col-characters">{entry.character_ids?.length ?? 0}体</span>
+              <span className="col-characters">
+                {entry.character_ids?.length ?? 0}体
+              </span>
               <span className="col-time">
-                {entry.end_time ? formatDuration(entry.start_time, entry.end_time) : '-'}
+                {entry.end_time
+                  ? formatDuration(entry.start_time, entry.end_time)
+                  : '-'}
               </span>
             </div>
           ))}

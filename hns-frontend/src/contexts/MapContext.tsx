@@ -16,8 +16,11 @@ interface MapContextType {
 
 export const MapContext = createContext<MapContextType | null>(null);
 
-export const MapProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [selectedPosition, setSelectedPosition] = useState<google.maps.LatLngLiteral | null>(null);
+export const MapProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
+  const [selectedPosition, setSelectedPosition] =
+    useState<google.maps.LatLngLiteral | null>(null);
   const [showStreetView, setShowStreetView] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
   const [currentMap, setCurrentMap] = useState<google.maps.Map | null>(null);
@@ -65,12 +68,18 @@ export const MapProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setShowStreetView,
       setShowSearch,
     }),
-    [selectedPosition, showStreetView, showSearch, currentMap, handleMapClick, handleLocationSelect, handleMapReady, toggleStreetView, toggleSearch]
+    [
+      selectedPosition,
+      showStreetView,
+      showSearch,
+      currentMap,
+      handleMapClick,
+      handleLocationSelect,
+      handleMapReady,
+      toggleStreetView,
+      toggleSearch,
+    ]
   );
 
-  return (
-    <MapContext.Provider value={value}>
-      {children}
-    </MapContext.Provider>
-  );
+  return <MapContext.Provider value={value}>{children}</MapContext.Provider>;
 };

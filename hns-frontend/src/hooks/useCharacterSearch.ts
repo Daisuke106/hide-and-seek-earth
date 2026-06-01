@@ -37,9 +37,10 @@ export const useCharacterSearch = () => {
     }
   }, []);
 
-  const filteredCharacters = filter === 'all'
-    ? characters
-    : characters.filter(char => char.difficulty === filter);
+  const filteredCharacters =
+    filter === 'all'
+      ? characters
+      : characters.filter(char => char.difficulty === filter);
 
   return {
     characters,
