@@ -13,14 +13,21 @@ if [ ! -d vendor ] || [ ! -f vendor/autoload.php ]; then
 fi
 
 # アプリケーションキーが未設定の場合は生成
-if [ -z "$(grep '^APP_KEY=base64:' .env)" ]; then
+if ! grep -q '^APP_KEY=base64:' .env; then
     php artisan key:generate --force
     echo "Application key generated"
 fi
 
-# MySQLの起動を待つ
+# MySQLの起動を待つ（最大60秒）
 echo "Waiting for MySQL..."
-while ! php -r "try { new PDO('mysql:host=${DB_HOST};port=${DB_PORT}', '${DB_USERNAME}', '${DB_PASSWORD}'); echo 'ok'; } catch (Exception \$e) { exit(1); }" 2>/dev/null; do
+RETRY=0
+MAX_RETRY=30
+until php -r "try { new PDO('mysql:host=${DB_HOST};port=${DB_PORT}', '${DB_USERNAME}', '${DB_PASSWORD}'); } catch (Exception \$e) { exit(1); }" 2>/dev/null; do
+    RETRY=$((RETRY + 1))
+    if [ "$RETRY" -ge "$MAX_RETRY" ]; then
+        echo "ERROR: MySQL did not become ready after $((MAX_RETRY * 2)) seconds." >&2
+        exit 1
+    fi
     sleep 2
 done
 echo "MySQL is ready"

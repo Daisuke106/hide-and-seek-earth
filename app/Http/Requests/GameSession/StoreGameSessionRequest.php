@@ -14,7 +14,7 @@ class StoreGameSessionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'character_ids' => 'required|array|min:1|max:10',
+            'character_ids' => 'required|array|min:1|max:10|distinct',
             'character_ids.*' => 'integer|exists:characters,id',
         ];
     }

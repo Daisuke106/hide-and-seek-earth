@@ -23,7 +23,7 @@ class IndexCharacterRequest extends FormRequest
             'bounds.south_west' => 'required_with:bounds|array',
             'bounds.south_west.lat' => 'required_with:bounds.south_west|numeric|between:-90,90',
             'bounds.south_west.lng' => 'required_with:bounds.south_west|numeric|between:-180,180',
-            'sort_by' => ['nullable', Rule::in(['id', 'name', 'difficulty', 'created_at', 'updated_at'])],
+            'sort_by' => ['nullable', Rule::in(['id', 'name', 'difficulty', 'created_at', 'updated_at', 'random'])],
             'sort_order' => ['nullable', Rule::in(['asc', 'desc'])],
             'limit' => 'nullable|integer|min:1|max:100',
             'per_page' => 'nullable|integer|min:1|max:100',

@@ -13,7 +13,8 @@ const mockCharacter: Character = {
 };
 
 const mockGameSession: GameSession = {
-  id: 'test-session-id',
+  id: 1,
+  session_id: 'test-session-id',
   characters: [mockCharacter],
   start_time: new Date().toISOString(),
   found_characters: [],

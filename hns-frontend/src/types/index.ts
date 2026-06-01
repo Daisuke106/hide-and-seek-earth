@@ -21,8 +21,8 @@ export interface Character {
 }
 
 export interface GameSession {
-  id: string;
-  session_id?: string;
+  id: number;
+  session_id: string;
   characters: Character[];
   character_ids?: number[];
   start_time: string;
