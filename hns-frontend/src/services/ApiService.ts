@@ -1,11 +1,11 @@
 import { Character, GameSession } from '../types';
 
 interface LeaderboardEntry {
-  id: number;
-  name: string;
-  score: number;
-  rank: number;
-  completedAt: string;
+  session_id: string;
+  total_score: number;
+  start_time: string;
+  end_time: string;
+  character_ids: number[];
 }
 
 const API_BASE_URL =
@@ -67,6 +67,19 @@ class ApiService {
     }
   }
 
+  // Laravelリソースのdataラップを解除するヘルパー
+  private unwrapData<T>(response: { data: T } | T): T {
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'data' in (response as object) &&
+      !Array.isArray(response)
+    ) {
+      return (response as { data: T }).data;
+    }
+    return response as T;
+  }
+
   // キャラクター関連のAPI
   async getCharacters(): Promise<Character[]> {
     const response = await this.fetchJson<{ data: Character[] } | Character[]>(
@@ -76,16 +89,19 @@ class ApiService {
     if (
       typeof response === 'object' &&
       'data' in response &&
-      Array.isArray(response.data)
+      Array.isArray((response as { data: Character[] }).data)
     ) {
-      return response.data;
+      return (response as { data: Character[] }).data;
     }
     // 配列が直接返ってきた場合
     return Array.isArray(response) ? response : [];
   }
 
   async getCharacter(id: number): Promise<Character> {
-    return this.fetchJson<Character>(`/characters/${id}`);
+    const response = await this.fetchJson<{ data: Character } | Character>(
+      `/characters/${id}`
+    );
+    return this.unwrapData(response);
   }
 
   async getRandomCharacters(count: number = 5): Promise<Character[]> {
@@ -94,45 +110,89 @@ class ApiService {
 
   // ゲームセッション関連のAPI
   async createGameSession(characterIds: number[]): Promise<GameSession> {
-    return this.fetchJson<GameSession>('/game-sessions', {
-      method: 'POST',
-      body: JSON.stringify({ character_ids: characterIds }),
-    });
+    const response = await this.fetchJson<{ data: GameSession } | GameSession>(
+      '/game-sessions',
+      {
+        method: 'POST',
+        body: JSON.stringify({ character_ids: characterIds }),
+      }
+    );
+    return this.unwrapData(response);
   }
 
   async getGameSession(sessionId: string): Promise<GameSession> {
-    return this.fetchJson<GameSession>(`/game-sessions/${sessionId}`);
+    const response = await this.fetchJson<{ data: GameSession } | GameSession>(
+      `/game-sessions/${sessionId}`
+    );
+    return this.unwrapData(response);
   }
 
   async updateGameSession(
     sessionId: string,
     updates: Partial<GameSession>
   ): Promise<GameSession> {
-    return this.fetchJson<GameSession>(`/game-sessions/${sessionId}`, {
-      method: 'PUT',
-      body: JSON.stringify(updates),
-    });
+    const response = await this.fetchJson<{ data: GameSession } | GameSession>(
+      `/game-sessions/${sessionId}`,
+      {
+        method: 'PUT',
+        body: JSON.stringify(updates),
+      }
+    );
+    return this.unwrapData(response);
   }
 
   async markCharacterAsFound(
     sessionId: string,
     characterId: number
   ): Promise<GameSession> {
-    return this.fetchJson<GameSession>(`/game-sessions/${sessionId}/found`, {
+    const response = await this.fetchJson<
+      | { message: string; session: GameSession; character: Character }
+      | GameSession
+    >(`/game-sessions/${sessionId}/found`, {
       method: 'POST',
       body: JSON.stringify({ character_id: characterId }),
     });
+    // バックエンドは { message, session, character } を返す
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'session' in (response as object)
+    ) {
+      return (
+        response as {
+          message: string;
+          session: GameSession;
+          character: Character;
+        }
+      ).session;
+    }
+    return response as GameSession;
   }
 
   async completeGameSession(sessionId: string): Promise<GameSession> {
-    return this.fetchJson<GameSession>(`/game-sessions/${sessionId}/complete`, {
+    const response = await this.fetchJson<
+      { message: string; session: GameSession } | GameSession
+    >(`/game-sessions/${sessionId}/complete`, {
       method: 'POST',
     });
+    // バックエンドは { message, session } を返す
+    if (
+      typeof response === 'object' &&
+      response !== null &&
+      'session' in (response as object)
+    ) {
+      return (response as { message: string; session: GameSession }).session;
+    }
+    return response as GameSession;
   }
 
   // リーダーボード関連のAPI
   async getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
-    return this.fetchJson<LeaderboardEntry[]>(`/leaderboard?limit=${limit}`);
+    const response = await this.fetchJson<
+      { data: LeaderboardEntry[] } | LeaderboardEntry[]
+    >(`/game-sessions/leaderboard?limit=${limit}`);
+    const raw = this.unwrapData(response);
+    return Array.isArray(raw) ? raw : [];
   }
 
   // ヘルスチェック

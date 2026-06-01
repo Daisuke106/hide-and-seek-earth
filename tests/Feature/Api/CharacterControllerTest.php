@@ -67,11 +67,13 @@ class CharacterControllerTest extends TestCase
                              'updated_at'
                          ]
                      ],
-                     'current_page',
-                     'per_page',
-                     'total'
+                     'meta' => [
+                         'current_page',
+                         'per_page',
+                         'total'
+                     ]
                  ])
-                 ->assertJsonPath('total', 2); // アクティブなキャラクターのみ
+                 ->assertJsonPath('meta.total', 2); // アクティブなキャラクターのみ
     }
 
     public function test_can_filter_characters_by_difficulty()
@@ -79,7 +81,7 @@ class CharacterControllerTest extends TestCase
         $response = $this->getJson('/api/characters?difficulty=easy');
 
         $response->assertStatus(200)
-                 ->assertJsonPath('total', 1)
+                 ->assertJsonPath('meta.total', 1)
                  ->assertJsonFragment(['difficulty' => 'easy']);
     }
 

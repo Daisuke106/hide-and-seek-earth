@@ -110,8 +110,8 @@ export const GameMap: React.FC<GameMapProps> = ({
         map,
         title: character.name,
         icon: {
-          url: character.imageUrl
-            ? getCharacterImageUrl(character.imageUrl)
+          url: character.image_url
+            ? getCharacterImageUrl(character.image_url)
             : getPlaceholderImage(character.name, character.difficulty),
           scaledSize: new google.maps.Size(40, 40),
           anchor: new google.maps.Point(20, 40),

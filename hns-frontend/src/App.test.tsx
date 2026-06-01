@@ -40,6 +40,15 @@ beforeAll(() => {
       },
     },
   };
+
+  // fetchのモック（APIコールを防ぐ）
+  (global as any).fetch = jest.fn().mockResolvedValue({
+    ok: true,
+    status: 200,
+    statusText: 'OK',
+    json: async () => [],
+    text: async () => '[]',
+  });
 });
 
 // useGoogleMapsフックのモック
@@ -54,6 +63,7 @@ jest.mock('./hooks/useGoogleMaps', () => ({
 
 test('renders app title', () => {
   render(<App />);
-  const titleElement = screen.getByText(/地球全体でかくれんぼ/i);
-  expect(titleElement).toBeInTheDocument();
+  // モックされたルーターは全ルートを同時にレンダリングするため、複数の要素が存在する
+  const titleElements = screen.getAllByText(/地球全体でかくれんぼ/i);
+  expect(titleElements.length).toBeGreaterThan(0);
 });

@@ -4,7 +4,7 @@ export interface Character {
   id: number;
   name: string;
   description: string;
-  imageUrl: string;
+  image_url: string | null;
   position: {
     lat: number;
     lng: number;
@@ -21,13 +21,16 @@ export interface Character {
 }
 
 export interface GameSession {
-  id: string;
+  id: number;
+  session_id: string;
   characters: Character[];
-  startTime: Date;
-  endTime?: Date;
-  foundCharacters: number[];
-  totalScore: number;
-  isCompleted: boolean;
+  character_ids?: number[];
+  start_time: string;
+  end_time?: string;
+  found_characters: number[];
+  total_score: number;
+  is_completed: boolean;
+  game_data?: Record<string, unknown>;
 }
 
 export interface MapSettings {

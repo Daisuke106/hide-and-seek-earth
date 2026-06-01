@@ -1,0 +1,11 @@
+vendor/
+node_modules/
+hns-frontend/node_modules/
+hns-frontend/build/
+.git/
+.env
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+bootstrap/cache/*

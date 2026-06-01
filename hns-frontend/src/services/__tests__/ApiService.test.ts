@@ -6,19 +6,20 @@ const mockCharacter: Character = {
   id: 1,
   name: 'Test Character',
   description: 'A test character for testing purposes',
-  imageUrl: '/test-image.png',
+  image_url: '/test-image.png',
   position: { lat: 35.6762, lng: 139.6503 },
   difficulty: 'easy',
   isFound: false,
 };
 
 const mockGameSession: GameSession = {
-  id: 'test-session-id',
+  id: 1,
+  session_id: 'test-session-id',
   characters: [mockCharacter],
-  startTime: new Date(),
-  foundCharacters: [],
-  totalScore: 0,
-  isCompleted: false,
+  start_time: new Date().toISOString(),
+  found_characters: [],
+  total_score: 0,
+  is_completed: false,
 };
 
 // Fetch APIのモック
@@ -122,7 +123,7 @@ describe('ApiService', () => {
 
   describe('markCharacterAsFound', () => {
     it('should mark character as found successfully', async () => {
-      const updatedSession = { ...mockGameSession, foundCharacters: [1] };
+      const updatedSession = { ...mockGameSession, found_characters: [1] };
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => updatedSession,
