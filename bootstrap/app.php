@@ -22,12 +22,20 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (ModelNotFoundException $e, Request $request) {
+            if (! $request->expectsJson()) {
+                return null;
+            }
+
             return response()->json([
                 'message' => 'Resource not found.',
             ], 404);
         });
 
         $exceptions->render(function (GameException $e, Request $request) {
+            if (! $request->expectsJson()) {
+                return null;
+            }
+
             return response()->json([
                 'message' => $e->getMessage(),
             ], $e->getStatusCode());

@@ -181,7 +181,11 @@ class ApiService {
 
   // リーダーボード関連のAPI
   async getLeaderboard(limit: number = 10): Promise<LeaderboardEntry[]> {
-    return this.fetchJson<LeaderboardEntry[]>(`/game-sessions/leaderboard?limit=${limit}`);
+    const response = await this.fetchJson<{ data: LeaderboardEntry[] } | LeaderboardEntry[]>(
+      `/game-sessions/leaderboard?limit=${limit}`
+    );
+    const raw = this.unwrapData(response);
+    return Array.isArray(raw) ? raw : [];
   }
 
   // ヘルスチェック

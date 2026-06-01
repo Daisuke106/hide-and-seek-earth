@@ -23,7 +23,7 @@ export const LeaderboardPage: React.FC = () => {
     setError(null);
     try {
       const data = await apiService.getLeaderboard(20);
-      setEntries(data as unknown as LeaderboardEntry[]);
+      setEntries(data);
     } catch (err) {
       setError(
         err instanceof Error ? err.message : 'ランキングの読み込みに失敗しました'
