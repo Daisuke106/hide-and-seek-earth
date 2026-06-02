@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "Figma": {
+      "command": "npx",
+      "args": ["-y", "@figma/mcp-server"],
+      "env": {
+        "FIGMA_API_KEY": "<YOUR_FIGMA_API_KEY>"
+      }
+    },
+    "Google Drive": {
+      "command": "npx",
+      "args": ["-y", "@google/mcp-server-drive"],
+      "env": {
+        "GOOGLE_CLIENT_ID": "<YOUR_GOOGLE_CLIENT_ID>",
+        "GOOGLE_CLIENT_SECRET": "<YOUR_GOOGLE_CLIENT_SECRET>",
+        "GOOGLE_REFRESH_TOKEN": "<YOUR_GOOGLE_REFRESH_TOKEN>"
+      }
+    }
+  },
+  "permissions": {
+    "allow": []
+  }
+}
