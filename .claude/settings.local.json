@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cat -v ~/.gitconfig && echo \"---\" && cat -v .git/config | grep -v 'github_pat')",
+      "Read(//root/**)"
+    ]
+  }
+}
