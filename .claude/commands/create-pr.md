@@ -24,7 +24,7 @@
 
 ## テンプレート
 
-`.github/pull_request_template.md` に準拠して以下の形式で作成する。
+`.github/pull_request_template.md` を参考にして以下の形式で作成する。
 
 ```markdown
 # プルリクエスト

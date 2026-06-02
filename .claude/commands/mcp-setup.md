@@ -17,7 +17,7 @@ MCP（Model Context Protocol）サーバーのセットアップを支援する�
 ## 設定ファイルの場所
 
 - プロジェクト設定: `.claude/settings.json`
-- ローカル設定（Git管理外）: `settings.local.json`
+- ローカル設定（Git管理外）: `.claude/settings.local.json`（雛形: `.claude/settings.local.json.example`）
 
 ## 主な MCP サーバー
 
@@ -29,5 +29,5 @@ MCP（Model Context Protocol）サーバーのセットアップを支援する�
 
 ## 注意事項
 
-- APIキーなどの機密情報は `settings.local.json` に記載し、Gitにコミットしない
-- `.env.local` の内容を参照すること
+- APIキーなどの機密情報は `.claude/settings.local.json` に記載し、Gitにコミットしない
+- 環境変数は `.claude/.env.local.example` を参照して設定すること（実ファイルはリポジトリ直下の `.env.local` に作成）

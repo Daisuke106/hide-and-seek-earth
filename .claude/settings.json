@@ -7,7 +7,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/pre-push-protected-branches.sh"
+            "command": "bash .claude/hooks/pre-push-protected-branches.sh"
           }
         ]
       }
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": ".claude/hooks/check-mcp-doc-sync.sh"
+            "command": "bash .claude/hooks/check-mcp-doc-sync.sh"
           }
         ]
       }
