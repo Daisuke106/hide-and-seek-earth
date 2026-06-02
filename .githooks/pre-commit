@@ -1,0 +1,16 @@
+#!/bin/bash
+# 保護ブランチへの直接commitを防止するGitフック
+
+PROTECTED_BRANCHES=("main" "master")
+
+CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null)
+
+for branch in "${PROTECTED_BRANCHES[@]}"; do
+  if [ "$CURRENT_BRANCH" = "$branch" ]; then
+    echo "エラー: 保護ブランチ '$branch' への直接commitは禁止されています。" >&2
+    echo "作業ブランチを作成してください: git checkout -b feature/your-feature" >&2
+    exit 1
+  fi
+done
+
+exit 0

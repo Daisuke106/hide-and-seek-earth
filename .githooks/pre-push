@@ -1,0 +1,30 @@
+#!/bin/bash
+# 保護ブランチへの直接push・force pushを防止するGitフック
+
+PROTECTED_BRANCHES=("main" "master")
+ZERO_SHA="0000000000000000000000000000000000000000"
+
+# stdin から push情報を読み取る
+# フォーマット: <local ref> <local sha1> <remote ref> <remote sha1>
+while read local_ref local_sha remote_ref remote_sha; do
+  remote_branch="${remote_ref#refs/heads/}"
+
+  # 保護ブランチへのpushを検出
+  for branch in "${PROTECTED_BRANCHES[@]}"; do
+    if [ "$remote_branch" = "$branch" ]; then
+      echo "エラー: 保護ブランチ '$branch' への直接pushは禁止されています。" >&2
+      echo "プルリクエストを作成してください。" >&2
+      exit 1
+    fi
+  done
+
+  # force pushの検出: リモートのSHAがローカルの祖先でなければ履歴の上書きを意味する
+  if [ "$remote_sha" != "$ZERO_SHA" ] && [ "$local_sha" != "$ZERO_SHA" ]; then
+    if ! git merge-base --is-ancestor "$remote_sha" "$local_sha" 2>/dev/null; then
+      echo "エラー: force pushは禁止されています。" >&2
+      exit 1
+    fi
+  fi
+done
+
+exit 0
