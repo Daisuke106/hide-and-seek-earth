@@ -31,8 +31,7 @@
 ✅ Require status checks to pass before merging
   ✅ Require branches to be up to date before merging
   ✅ Status checks to require:
-    - Backend Tests (PHP 8.2)
-    - Backend Tests (PHP 8.3) 
+    - Backend Tests (PHP 8.5.12)
     - Frontend Tests
     - Code Quality
     - Dependency Security Check (PRのみ)
@@ -63,8 +62,7 @@ chmod +x scripts/setup-branch-protection.sh
 
 | 設定するステータスチェック名 | CI/CDワークフローのジョブ名 |
 |------------------------------|-------------------------|
-| `Backend Tests (PHP 8.2)`   | `backend-tests` (matrix: php: '8.2') |
-| `Backend Tests (PHP 8.3)`   | `backend-tests` (matrix: php: '8.3') |
+| `Backend Tests (PHP 8.5.12)`   | `backend-tests` (matrix: php: '8.5.12') |
 | `Frontend Tests`             | `frontend-tests` |
 | `Code Quality`               | `code-quality` |
 | `Dependency Security Check`  | `dependency-check` |
