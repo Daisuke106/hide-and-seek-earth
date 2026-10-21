@@ -30,8 +30,10 @@ CIの必須チェックを設定している場合は、`Backend Tests (PHP 8.5.
 
 ## この作業環境での検証
 
-- `composer validate --strict`: 成功。依存パッケージのバージョンは変更していません。
+- `composer validate --strict`: 成功。PHP本体の更新時は依存パッケージのバージョンを維持し、その後の依存ライブラリ修正で更新しています。
 - `composer prohibits php 8.5.12 --locked`: PHPのバージョン制約による阻害なし。
 - `DB_CONNECTION=sqlite DB_DATABASE=:memory: vendor/bin/phpunit`: 33テスト・188アサーション成功（PHP 8.2.31）。
 - DockerとPHP 8.5.12が作業環境にないため、対象バージョンでのビルド・テスト・本番適用は未実施。
-- Composerは既存依存6パッケージに26件のセキュリティアドバイザリを報告。今回のPHP本体の更新とは別に対応が必要です。
+- 依存ライブラリ修正で、検出された6パッケージと関連依存2パッケージを同じメジャーバージョン内で更新しました。
+- 更新後の `composer audit --locked` と `composer audit --locked --no-dev` はともに脆弱性検出0件。
+- 更新後の既存テストも33テスト・188アサーション成功（PHP 8.2.31、PHPUnit 11.5.55）。PHP 8.5.12での確認はPR #167のCIで実施します。
