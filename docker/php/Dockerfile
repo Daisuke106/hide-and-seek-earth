@@ -1,4 +1,4 @@
-FROM php:8.2-fpm
+FROM php:8.5.12-fpm
 
 # システム依存パッケージ
 RUN apt-get update && apt-get install -y \
