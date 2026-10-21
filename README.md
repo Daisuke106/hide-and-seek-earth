@@ -36,7 +36,7 @@ Google Map（または代替地図）を使って、全世界に隠されたオ�
 
 ### 前提条件
 - Node.js 16.x 以上
-- PHP 8.1 以上
+- PHP 8.5.12 以上（8.5系）
 - Composer
 - Docker（推奨）
 
