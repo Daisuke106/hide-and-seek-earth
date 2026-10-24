@@ -62,8 +62,6 @@ updates:
         update-types: ["version-update:semver-major"]
       - dependency-name: "react-dom"
         update-types: ["version-update:semver-major"]
-      - dependency-name: "react-scripts"
-        update-types: ["version-update:semver-major"]
     # グループ化設定
     groups:
       react:
@@ -80,6 +78,10 @@ updates:
           - "@typescript-eslint/*"
       build-tools:
         patterns:
+          - "vite"
+          - "@vitejs/*"
+          - "babel-jest"
+          - "@babel/*"
           - "typescript"
           - "prettier"
 
