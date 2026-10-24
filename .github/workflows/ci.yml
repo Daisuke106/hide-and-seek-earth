@@ -122,6 +122,9 @@ jobs:
       - name: Verify security auto-approval policy
         run: node --test scripts/tests/dependabot-security-review.test.cjs
 
+      - name: Verify Vercel deployment approval policy
+        run: node --test scripts/tests/vercel-deploy.test.cjs
+
       - name: Run Prettier check
         working-directory: ./hns-frontend
         run: npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,md}"

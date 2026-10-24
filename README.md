@@ -8,6 +8,8 @@
 - [Vercelプロジェクト管理画面](https://vercel.com/daichaaaan-pj/hide-and-seek-earth)（管理権限が必要）
 - [デプロイ設定・運用手順](docs/vercel-deployment.md)
 
+公開はマージ済みPRのコメントコマンドで要求します。マージやpushだけでは公開しません。セキュリティ・環境設定・操作を確認後、`/deploy staging <mainの40桁SHA> --verified` を投稿し、検証成功・操作確認後に同じSHAで `/deploy production <mainの40桁SHA> --verified` を投稿してください。詳細な前提条件は運用手順を参照してください。
+
 2026年10月24日、Vercelへの初回デプロイと実行をプロジェクト管理者が確認しました。
 
 ## 📖 プロジェクト概要
