@@ -1,8 +1,66 @@
 'use strict';
-const { readFileSync, writeFileSync } = require('node:fs');
+const { readFileSync, writeFileSync, appendFileSync } = require('node:fs');
 const { parseEnv } = require('node:util');
 const { randomBytes, scryptSync, timingSafeEqual } = require('node:crypto');
 const { isIP } = require('node:net');
+
+const FAILURES = Object.freeze({
+  API_URL_MISSING: 'Vercelの対象環境にREACT_APP_API_URLがありません。stagingはPreview、productionはProductionへConfigとして登録してください。GitHubのDEPLOY_API_URLだけではVercelの変数は設定されません。',
+  API_URL_INVALID: 'REACT_APP_API_URLには公開Laravel APIのHTTPS URLを設定してください。',
+  API_URL_MISMATCH: 'VercelのREACT_APP_API_URLとGitHub EnvironmentのDEPLOY_API_URLを完全一致させ、末尾を/apiにしてください。',
+  MAPS_KEY_MISSING: 'Vercelの対象環境にREACT_APP_GOOGLE_MAPS_API_KEYがありません。stagingはPreview、productionはProductionへブラウザ用MapsキーをConfigとして登録してください。キーの値はPRへ貼らないでください。',
+  MAPS_KEY_INVALID: 'REACT_APP_GOOGLE_MAPS_API_KEYがブラウザ用Google Mapsキーの形式ではありません。対象環境の設定を確認してください。',
+  PUBLIC_VARIABLE_UNEXPECTED: '許可していないブラウザ公開変数があります。REACT_APP_・VITE_・NEXT_PUBLIC_の設定名を確認してください。',
+  ENV_FILE_MISSING: '設定ファイルが見つかりません。vercel pullの成功と、リポジトリ直下の.vercelへの保存を確認してください。',
+  PROJECT_MISMATCH: 'VercelのTeam ID・Project IDがGitHub Environmentの指定と一致しません。',
+  PROJECT_RUNTIME_INVALID: 'VercelのRoot Directoryをhns-frontend、FrameworkをVite、Node.jsを22.xにしてください。',
+  DEPLOY_HOOKS_ENABLED: '公開手順を迂回するVercel Deploy Hookがあります。既存の公開手順を確認してください。',
+  API_RESPONSE_INVALID: 'Laravel APIのhealth・characters・leaderboardが想定したJSONを返していません。CloudのDB設定とAPIログを確認してください。',
+  API_CORS_INVALID: 'Laravel APIのCORSが検証するOriginまたはPOSTを許可していません。対象プロジェクトのOrigin許可設定を確認してください。',
+  ACCESS_DENIED: 'VercelまたはLaravel APIへのアクセスがHTTP 401/403で拒否されました。トークンの権限・有効期限とAPIのアクセス設定を確認してください。',
+  HTTP_CHECK_FAILED: 'VercelまたはLaravel APIへのHTTP確認が失敗しました。サービスの稼働状態とアクセス設定を確認してください。',
+  ENV_CHANGED: '検証中にVercelの環境変数またはプロジェクト設定が変更されました。設定を確定してから新規コメントで再要求してください。',
+  PREFLIGHT_FAILED: '公開前の設定検証が失敗しました。Vercel設定・対象環境の公開変数・Laravel APIの状態を確認してください。',
+});
+
+function failureByCode(code) {
+  return Object.hasOwn(FAILURES, code) ? { code, message: FAILURES[code] } : null;
+}
+
+function fail(code) {
+  const error = new Error(FAILURES[code]);
+  error.preflightCode = code;
+  throw error;
+}
+
+function diagnoseFailure(error) {
+  if (failureByCode(error?.preflightCode)) return failureByCode(error.preflightCode);
+  const exact = new Map([
+    ['Vercel project/team mismatch', 'PROJECT_MISMATCH'],
+    ['Vercel project must use root hns-frontend, Vite and Node 22.x', 'PROJECT_RUNTIME_INVALID'],
+    ['Remove Vercel deploy hooks that bypass the approval workflow', 'DEPLOY_HOOKS_ENABLED'],
+    ['API must return JSON', 'API_RESPONSE_INVALID'], ['API response shape is invalid', 'API_RESPONSE_INVALID'],
+    ['API CORS must explicitly allow the deployed origin', 'API_CORS_INVALID'], ['API POST/CORS preflight failed', 'API_CORS_INVALID'],
+    ['Reviewed Vercel environment/settings changed during the build', 'ENV_CHANGED'],
+  ]);
+  if (exact.has(error?.message)) return failureByCode(exact.get(error.message));
+  if (error?.code === 'ENOENT') return failureByCode('ENV_FILE_MISSING');
+  if (/^REACT_APP_API_URL:/.test(error?.message || '')) return failureByCode('API_URL_INVALID');
+  const http = /^Deployment check failed \(HTTP (\d{3})\)$/.exec(error?.message || '');
+  if (http) return failureByCode(['401', '403'].includes(http[1]) ? 'ACCESS_DENIED' : 'HTTP_CHECK_FAILED');
+  return failureByCode('PREFLIGHT_FAILED');
+}
+
+function reportFailure(error, env = process.env, log = console.error, append = appendFileSync) {
+  const failure = diagnoseFailure(error);
+  log(`::error title=Vercel preflight ${failure.code}::${failure.message}`);
+  // Emit only curated messages, never provider errors, file contents or credentials.
+  try {
+    if (env.GITHUB_OUTPUT) append(env.GITHUB_OUTPUT, `failure_code=${failure.code}\n`);
+    if (env.GITHUB_STEP_SUMMARY) append(env.GITHUB_STEP_SUMMARY, `### 公開前検証で停止しました\n\n\`${failure.code}\`\n\n${failure.message}\n`);
+  } catch { log('公開前検証のSummaryを保存できませんでした。上記の診断コードを確認してください。'); }
+  return failure;
+}
 
 function publicUrl(value, label, originOnly = false) {
   let url;
@@ -16,12 +74,14 @@ function publicUrl(value, label, originOnly = false) {
 }
 
 function validateEnvironment(env, expectedApi) {
+  if (!env.REACT_APP_API_URL?.trim()) fail('API_URL_MISSING');
   const api = publicUrl(env.REACT_APP_API_URL, 'REACT_APP_API_URL');
   publicUrl(expectedApi, 'DEPLOY_API_URL');
-  if (env.REACT_APP_API_URL !== expectedApi || !api.pathname.endsWith('/api')) throw new Error('API URL must match reviewed DEPLOY_API_URL and end in /api');
-  if (!/^AIza[\w-]{35}$/.test(env.REACT_APP_GOOGLE_MAPS_API_KEY || '')) throw new Error('A valid-format Google Maps browser key is required');
+  if (env.REACT_APP_API_URL !== expectedApi || !api.pathname.endsWith('/api')) fail('API_URL_MISMATCH');
+  if (!env.REACT_APP_GOOGLE_MAPS_API_KEY?.trim()) fail('MAPS_KEY_MISSING');
+  if (!/^AIza[\w-]{35}$/.test(env.REACT_APP_GOOGLE_MAPS_API_KEY)) fail('MAPS_KEY_INVALID');
   const allowed = new Set(['REACT_APP_API_URL', 'REACT_APP_GOOGLE_MAPS_API_KEY']);
-  if (Object.keys(env).some(key => /^(REACT_APP_|VITE_|NEXT_PUBLIC_)/.test(key) && !allowed.has(key))) throw new Error('Unexpected browser-public environment variable');
+  if (Object.keys(env).some(key => /^(REACT_APP_|VITE_|NEXT_PUBLIC_)/.test(key) && !allowed.has(key))) fail('PUBLIC_VARIABLE_UNEXPECTED');
   if (env.PUBLIC_URL && env.PUBLIC_URL !== '/') throw new Error('PUBLIC_URL must be / or unset');
   if (env.APP_DEBUG && env.APP_DEBUG.toLowerCase() !== 'false') throw new Error('APP_DEBUG must not be enabled');
   return api;
@@ -115,9 +175,8 @@ function reviewedOrigin(env) {
   throw new Error('DEPLOY_APP_ORIGIN is required for production');
 }
 
-if (require.main === module) preflight(process.argv[2]).catch(() => {
-  // Never emit URLs, response bodies or credentials from provider errors.
-  console.error('Vercel preflight failed. Check project settings, environment variables, API health and CORS using docs/vercel-deployment.md.');
+if (require.main === module) preflight(process.argv[2]).catch(error => {
+  reportFailure(error);
   process.exitCode = 1;
 });
-module.exports = { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi, probeApiReads, reviewedOrigin, request };
+module.exports = { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi, probeApiReads, reviewedOrigin, request, diagnoseFailure, reportFailure, failureByCode };

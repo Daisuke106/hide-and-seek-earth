@@ -1,6 +1,7 @@
 'use strict';
 
 const { parseCommand } = require('./vercel-deploy-policy.cjs');
+const { failureByCode } = require('./vercel-preflight.cjs');
 
 const VARIABLES = ['VERCEL_ORG_ID', 'VERCEL_PROJECT_ID', 'DEPLOY_API_URL', 'DEPLOY_APP_ORIGIN'];
 const SECRETS = ['VERCEL_TOKEN'];
@@ -28,7 +29,7 @@ function settingsMessage(missing, environment, repoUrl) {
   return lines.join('\n');
 }
 
-function renderStatus(context, phase, results = {}, missing = [], deploymentUrl) {
+function renderStatus(context, phase, results = {}, missing = [], deploymentUrl, failureCode) {
   const repoUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
   const runUrl = `${repoUrl}/actions/runs/${context.runId}`;
   const marker = `<!-- vercel-deploy-status:${context.runId}:${context.payload.comment.id} -->`;
@@ -43,10 +44,12 @@ function renderStatus(context, phase, results = {}, missing = [], deploymentUrl)
   if (command) lines.push('', `対象: **${command.environment}** / コミット: \`${command.sha}\``);
   else lines.push('', 'コマンドは `/deploy staging|production <40桁のSHA> --verified` の1行で新規投稿してください。');
   if (complete && !ok) {
+    const diagnosis = failureByCode(failureCode);
     const labels = { authorize: '要求・CI確認', test: '事前テスト', deploy: 'デプロイ・動作検証' };
     const states = { success: '成功', failure: '失敗', skipped: '未実行', cancelled: 'キャンセル' };
     lines.push('', ...Object.keys(labels).map(job => `- ${labels[job]}: ${states[results[job]] || '未完了'}`));
-    if (missing.length) lines.push('', settingsMessage(missing, command?.environment, repoUrl));
+    if (diagnosis) lines.push('', `**公開前検証: \`${diagnosis.code}\`**`, diagnosis.message);
+    else if (missing.length) lines.push('', settingsMessage(missing, command?.environment, repoUrl));
     else lines.push('', '停止理由は上記ログの失敗したステップで確認できます。CI待ちで停止した場合は、成功後に新しいコメントで再要求してください。');
   }
   // Only link a candidate URL produced by our Vercel CLI step, never arbitrary input.
@@ -56,11 +59,11 @@ function renderStatus(context, phase, results = {}, missing = [], deploymentUrl)
   return { marker, body: lines.join('\n'), complete, reaction: complete ? (ok ? '+1' : 'confused') : 'eyes' };
 }
 
-async function notify({ github, context, phase, results, missing, deploymentUrl, warn = () => {} }) {
+async function notify({ github, context, phase, results, missing, deploymentUrl, failureCode, warn = () => {} }) {
   const request = context.payload.comment;
   if (context.eventName !== 'issue_comment' || context.payload.action !== 'created' ||
       !context.payload.issue?.pull_request || request?.user?.type !== 'User' || !request.body.startsWith('/deploy ')) return { skipped: true };
-  const status = renderStatus(context, phase, results, missing, deploymentUrl);
+  const status = renderStatus(context, phase, results, missing, deploymentUrl, failureCode);
   const warning = (operation, error) => warn(`${operation}を通知できませんでした (HTTP ${Number(error.status) || '不明'})。通知ジョブのpull-requests: write / issues: write権限を確認してください。ActionsのSummaryにも進行状況を記録します。`);
   try {
     const permission = await github.rest.repos.getCollaboratorPermissionLevel({ ...context.repo, username: request.user.login });
