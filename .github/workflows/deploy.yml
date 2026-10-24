@@ -1,200 +1,193 @@
-name: Deploy
+name: Deploy to Vercel
+run-name: Vercel deployment request by @${{ github.actor }}
+
+on:
+  issue_comment:
+    types: [created]
+
 permissions:
   contents: read
 
-on:
-  push:
-    branches: [ main ]
-    tags: [ 'v*' ]
-  workflow_dispatch:
-    inputs:
-      environment:
-        description: 'Deployment environment'
-        required: true
-        default: 'staging'
-        type: choice
-        options:
-          - staging
-          - production
-
-env:
-  PHP_VERSION: '8.5.12'
-  NODE_VERSION: '22'
+# Serialize requests across both environments. A newer command never cancels
+# an active production verification/promotion halfway through.
+concurrency:
+  group: vercel-approved-deployment
+  cancel-in-progress: false
 
 jobs:
-  # Build artifacts
-  build:
-    name: Build Application
+  authorize:
+    name: Authorize deployment request
+    if: github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy ')
     runs-on: ubuntu-latest
-    
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      actions: read
     outputs:
-      version: ${{ steps.version.outputs.version }}
-      
+      environment: ${{ steps.policy.outputs.environment }}
+      sha: ${{ steps.policy.outputs.sha }}
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v5
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          fetch-depth: 0
-
-      - name: Get version
-        id: version
-        run: |
-          if [[ $GITHUB_REF == refs/tags/* ]]; then
-            echo "version=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-          else
-            echo "version=$(git describe --tags --always --dirty)" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - name: Verify actor, merge SHA and latest CI
+        id: policy
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         with:
-          php-version: ${{ env.PHP_VERSION }}
-          extensions: dom, curl, libxml, mbstring, zip, pcntl, pdo, sqlite, pdo_sqlite
+          script: |
+            const { authorize } = require('./scripts/vercel-deploy-policy.cjs');
+            const result = await authorize({ github, context });
+            core.setOutput('environment', result.environment);
+            core.setOutput('sha', result.sha);
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v7
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: Install backend dependencies
-        run: composer install --prefer-dist --no-interaction --no-dev --optimize-autoloader
-
-      - name: Install frontend dependencies
-        working-directory: ./hns-frontend
-        run: |
-          if [ -f package-lock.json ]; then
-            echo "Using npm ci with package-lock.json"
-            npm ci
-          else
-            echo "Using npm install (no package-lock.json found)"
-            npm install
-          fi
-
-      - name: Build frontend
-        working-directory: ./hns-frontend
-        run: npm run build
-
-      - name: Create deployment archive
-        run: |
-          mkdir -p deploy
-          rsync -av --exclude-from=.deployignore . deploy/
-          cd deploy
-          tar -czf ../deployment-${{ steps.version.outputs.version }}.tar.gz .
-          
-      - name: Upload deployment artifact
-        uses: actions/upload-artifact@v7
-        with:
-          name: deployment-${{ steps.version.outputs.version }}
-          path: deployment-${{ steps.version.outputs.version }}.tar.gz
-          retention-days: 30
-
-  # Deploy to staging
-  deploy-staging:
-    name: Deploy to Staging
+  test:
+    name: Verify deployment code
+    needs: authorize
     runs-on: ubuntu-latest
-    needs: build
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          # issue_comment's github.sha is the trusted default-branch commit.
+          # authorize separately requires it to equal the requested merge SHA.
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: hns-frontend/package-lock.json
+      - run: node --test scripts/tests/vercel-deploy.test.cjs
+      - run: npm ci
+        working-directory: hns-frontend
+      - run: npm audit --audit-level=moderate
+        working-directory: hns-frontend
+      - run: npm test -- --watch=false --runInBand
+        working-directory: hns-frontend
+      - run: npm run test:toolchain
+        working-directory: hns-frontend
+
+  deploy:
+    name: Deploy ${{ needs.authorize.outputs.environment }}
+    needs: [authorize, test]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      issues: read
+      actions: read
     environment:
-      name: staging
-      url: https://staging.example.com
-      
+      name: ${{ needs.authorize.outputs.environment }}
+      url: ${{ steps.deploy.outputs.url }}
+    # rootDirectory=hns-frontend is applied by Vercel. CLI runs at repo root.
+    defaults:
+      run:
+        working-directory: .
+    env:
+      VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      DEPLOY_API_URL: ${{ vars.DEPLOY_API_URL }}
+      DEPLOY_APP_ORIGIN: ${{ vars.DEPLOY_APP_ORIGIN }}
+      DEPLOY_SHA: ${{ needs.authorize.outputs.sha }}
+      TARGET: ${{ needs.authorize.outputs.environment == 'production' && 'production' || 'preview' }}
     steps:
-      - name: Download deployment artifact
-        uses: actions/download-artifact@v8
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
-          name: deployment-${{ needs.build.outputs.version }}
-
-      - name: Deploy to staging server
-        run: |
-          echo "Deploying version ${{ needs.build.outputs.version }} to staging"
-          # ここに実際のデプロイメントコマンドを追加
-          # 例: scp, rsync, SSH commands, Docker deployment等
-
-      - name: Run database migrations
-        run: |
-          echo "Running database migrations on staging"
-          # 例: ssh staging "cd /var/www/app && php artisan migrate --force"
-
-      - name: Clear application cache
-        run: |
-          echo "Clearing application cache on staging"
-          # 例: ssh staging "cd /var/www/app && php artisan cache:clear"
-
-      - name: Verify deployment
-        run: |
-          echo "Verifying staging deployment"
-          # ヘルスチェック等
-          # curl -f https://staging.example.com/health
-
-  # Deploy to production
-  deploy-production:
-    name: Deploy to Production
-    runs-on: ubuntu-latest
-    needs: build
-    if: startsWith(github.ref, 'refs/tags/') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
-    environment:
-      name: production
-      url: https://production.example.com
-      
-    steps:
-      - name: Download deployment artifact
-        uses: actions/download-artifact@v8
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7
         with:
-          name: deployment-${{ needs.build.outputs.version }}
-
-      - name: Create deployment backup
+          node-version: '22'
+      - name: Revalidate authorization after environment approval
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            await require('./scripts/vercel-deploy-policy.cjs').authorize({ github, context });
+      - name: Validate connection settings
+        shell: bash
         run: |
-          echo "Creating backup before production deployment"
-          # バックアップコマンドをここに追加
-
-      - name: Deploy to production server
+          for name in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN DEPLOY_API_URL DEPLOY_APP_ORIGIN; do
+            if [[ -z "${!name}" ]]; then
+              echo "::error::$name is required. See docs/vercel-deployment.md."
+              exit 1
+            fi
+          done
+      - name: Install pinned Vercel CLI
+        run: npm install --global vercel@65.2.0 --ignore-scripts
+      - name: Pull reviewed environment
+        run: vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+      - name: Check security configuration, public variables and API readiness
+        run: node scripts/vercel-preflight.cjs record
+      - name: Build reviewed commit
+        shell: bash
         run: |
-          echo "Deploying version ${{ needs.build.outputs.version }} to production"
-          # 本番環境へのデプロイメントコマンド
-
-      - name: Run database migrations
+          flags=()
+          if [[ "$TARGET" == production ]]; then flags+=(--prod); fi
+          vercel build "${flags[@]}" --token="$VERCEL_TOKEN"
+      - name: Refresh environment and reject configuration changes
         run: |
-          echo "Running database migrations on production"
-          # 本番環境でのマイグレーション実行
-
-      - name: Clear application cache
+          vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+          node scripts/vercel-preflight.cjs compare
+      - name: Revalidate main and CI before upload
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            await require('./scripts/vercel-deploy-policy.cjs').authorize({ github, context });
+      - name: Upload candidate without switching production domains
+        id: deploy
+        shell: bash
         run: |
-          echo "Clearing application cache on production"
-          # 本番環境でのキャッシュクリア
-
-      - name: Verify deployment
+          flags=()
+          if [[ "$TARGET" == production ]]; then flags+=(--prod --skip-domain); fi
+          url="$(vercel deploy --prebuilt "${flags[@]}" --token="$VERCEL_TOKEN")"
+          if [[ ! "$url" =~ ^https://[a-z0-9-]+\.vercel\.app$ ]]; then
+            echo '::error::Unexpected Vercel deployment URL.'
+            exit 1
+          fi
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Verify candidate routes, assets, security headers and API CORS
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+          BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
+        run: node scripts/vercel-smoke.cjs
+      - name: Reject changed environment before promotion
         run: |
-          echo "Verifying production deployment"
-          # 本番環境のヘルスチェック
-
-      - name: Notify deployment success
-        if: success()
+          vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
+          node scripts/vercel-preflight.cjs compare
+      - name: Final authorization check before promotion
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            await require('./scripts/vercel-deploy-policy.cjs').authorize({ github, context });
+      - name: Promote verified production candidate
+        if: env.TARGET == 'production'
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        run: vercel promote "$DEPLOYMENT_URL" --yes --token="$VERCEL_TOKEN"
+      - name: Show verified deployment URL
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
         run: |
-          echo "Production deployment successful"
-          # Slack/Discord/Email通知等
+          printf '### Vercel verification passed\n\n[Open deployment](%s)\n\nCommit: `%s`\nEnvironment: %s\n' "$DEPLOYMENT_URL" "$DEPLOY_SHA" "$TARGET" >> "$GITHUB_STEP_SUMMARY"
 
-      - name: Rollback on failure
-        if: failure()
-        run: |
-          echo "Production deployment failed, initiating rollback"
-          # ロールバック処理
-
-  # Notify deployment status
-  notify:
-    name: Notify Deployment Status
+  report:
+    name: Report deployment result
+    needs: [authorize, test, deploy]
+    if: always() && github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy ')
     runs-on: ubuntu-latest
-    needs: [build, deploy-staging, deploy-production]
-    if: always()
-    
+    permissions:
+      issues: write
     steps:
-      - name: Notify success
-        if: needs.build.result == 'success' && (needs.deploy-staging.result == 'success' || needs.deploy-production.result == 'success')
-        run: |
-          echo "Deployment completed successfully"
-          # 成功通知
-
-      - name: Notify failure
-        if: needs.build.result == 'failure' || needs.deploy-staging.result == 'failure' || needs.deploy-production.result == 'failure'
-        run: |
-          echo "Deployment failed"
-          # 失敗通知
+      - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          AUTH_RESULT: ${{ needs.authorize.result }}
+          TEST_RESULT: ${{ needs.test.result }}
+          DEPLOY_RESULT: ${{ needs.deploy.result }}
+        with:
+          script: |
+            const ok = ['AUTH_RESULT', 'TEST_RESULT', 'DEPLOY_RESULT'].every(k => process.env[k] === 'success');
+            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
+              body: `${ok ? 'デプロイと検証が完了しました。' : 'デプロイ要求は完了していません。権限・対象SHA・CI・設定・検証結果を確認してください。'}\n\n[実行結果](${url})` });
