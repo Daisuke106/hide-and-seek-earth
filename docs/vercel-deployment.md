@@ -1,5 +1,17 @@
 # Vercelへのフロントエンド公開
 
+## 現在の公開先
+
+- 公開アプリ: https://hide-and-seek-earth.vercel.app （GitHubリポジトリのWebsite登録先）
+- 管理画面: https://vercel.com/daichaaaan-pj/hide-and-seek-earth （管理権限が必要）
+- Vercelチーム: `daichaaaan-pj`
+- プロジェクト名: `hide-and-seek-earth`
+
+2026年10月24日、プロジェクト管理者より初回デプロイと実行成功の報告を受けています。
+この確認はGitHub Actions経由のstaging/production公開や、Laravel API・DBを含む総合テストの完了を示すものではありません。
+
+## デプロイ構成
+
 React/ViteをVercelに配置します。LaravelとDBは配置しません。
 mainへのpushはstaging（Vercel Preview）、手動実行はstaging/productionを選択できます。
 デプロイはmainのみ許可し、監査・フロントエンドテストが成功した後に実行します。
