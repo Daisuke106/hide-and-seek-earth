@@ -4,7 +4,7 @@ const { execFileSync } = require('node:child_process');
 const { run } = require('./dependabot-security-review.cjs');
 
 function query(params) {
-  const data = Object.entries(params).filter(([key, value]) => !['owner', 'repo', 'pull_number', 'run_id', 'path', 'basehead', 'ref'].includes(key) && value !== undefined);
+  const data = Object.entries(params).filter(([key, value]) => !['owner', 'repo', 'pull_number', 'run_id', 'path', 'basehead', 'ref', 'branch'].includes(key) && value !== undefined);
   return data.length ? `?${new URLSearchParams(data).toString()}` : '';
 }
 function route(path) { return Object.assign(() => {}, { path }); }
@@ -21,6 +21,7 @@ const get = (path) => { const method = route(path); return Object.assign((params
 const forbidden = async () => { throw new Error('Writes are disabled in the live dry-run adapter'); };
 const github = { rest: {
   repos: {
+    getBranch: get((p) => `${prefix(p)}/branches/${p.branch}`),
     compareCommitsWithBasehead: get((p) => `${prefix(p)}/compare/${p.basehead}`),
     getContent: get((p) => `${prefix(p)}/contents/${p.path}?ref=${encodeURIComponent(p.ref)}`),
     getCombinedStatusForRef: get((p) => `${prefix(p)}/commits/${p.ref}/status`),

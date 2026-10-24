@@ -96,6 +96,8 @@ async function workflowsPassed(github, repo, pr) {
 async function evaluate({ github, repo, pr, reviews }) {
   if (pr.state !== 'open' || pr.draft || pr.user.login !== BOT || pr.head.repo?.full_name !== `${repo.owner}/${repo.repo}` || !pr.head.ref.startsWith('dependabot/') || pr.base.ref !== 'main') return { reason: '対象外のPRです' };
   if (pr.mergeable !== true) return { reason: '競合またはマージ可否未確定です' };
+  const { data: main } = await github.rest.repos.getBranch({ ...repo, branch: 'main' });
+  if (pr.base.sha !== main.commit.sha) return { reason: 'PRのbase情報が現在のmainと一致しません' };
   const { data: comparison } = await github.rest.repos.compareCommitsWithBasehead({ ...repo, basehead: `${pr.base.sha}...${pr.head.sha}` });
   if (comparison.status !== 'ahead') return { reason: '最新mainを取り込んでいません' };
   const latest = new Map();
@@ -142,7 +144,8 @@ async function run({ github, context, core, dryRun = false, number }) {
       }
       if (reviews.some((r) => r.user.login === REVIEWER && r.state === 'APPROVED' && r.commit_id === pr.head.sha && r.body?.includes(MARKER))) { core.info(`#${pr.number}: 承認済み`); continue; }
       const { data: current } = await github.rest.pulls.get({ ...repo, pull_number: pr.number });
-      if (current.head.sha !== pr.head.sha || current.base.sha !== pr.base.sha || current.state !== 'open' || current.draft || current.mergeable !== true) { core.info(`#${pr.number}: 判定中にPRが変更されました`); continue; }
+      const { data: liveMain } = await github.rest.repos.getBranch({ ...repo, branch: 'main' });
+      if (current.head.sha !== pr.head.sha || current.base.sha !== pr.base.sha || liveMain.commit.sha !== pr.base.sha || current.state !== 'open' || current.draft || current.mergeable !== true) { core.info(`#${pr.number}: 判定中にPRまたはmainが変更されました`); continue; }
       // Recheck live CI immediately before attaching approval to the exact SHA.
       const finalChecks = await workflowsPassed(github, repo, current);
       if (finalChecks.reason) { await revoke({ github, repo, reviews, dryRun, core }); core.info(finalChecks.reason); continue; }
@@ -151,7 +154,8 @@ async function run({ github, context, core, dryRun = false, number }) {
         const { data: created } = await github.rest.pulls.createReview({ ...repo, pull_number: pr.number, commit_id: pr.head.sha, event: 'APPROVE', body: `${MARKER}\n署名済みDependabot更新、変更範囲、最新main、必須CIと追加チェックの成功を確認しました。\n修正対象: ${result.ids.join(', ')}\n確認コミット: ${pr.head.sha}\n自動マージは行いません。` });
         reviews.push({ id: created.id, state: 'APPROVED', user: { login: REVIEWER }, body: MARKER, commit_id: pr.head.sha, pull_number: pr.number });
         const { data: after } = await github.rest.pulls.get({ ...repo, pull_number: pr.number });
-        if (after.head.sha !== pr.head.sha || after.base.sha !== pr.base.sha || after.state !== 'open' || after.draft) {
+        const { data: afterMain } = await github.rest.repos.getBranch({ ...repo, branch: 'main' });
+        if (after.head.sha !== pr.head.sha || after.base.sha !== pr.base.sha || afterMain.commit.sha !== pr.base.sha || after.state !== 'open' || after.draft) {
           await revoke({ github, repo, reviews, dryRun, core });
           core.info(`#${pr.number}: 承認中にPRが変更されたため取り消しました`);
         }

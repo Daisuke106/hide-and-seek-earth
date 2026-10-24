@@ -16,12 +16,13 @@ function fixture() {
     jobs: Object.fromEntries(Object.values(REQUIRED).map((names, i) => [i + 1, names.map((name) => ({ name, status: 'completed', conclusion: 'success' }))])),
     old: { lockfileVersion: 3, packages: { '': {}, 'node_modules/example': { version: '1.0.0' } } },
     next: { lockfileVersion: 3, packages: { '': {}, 'node_modules/example': { version: '1.0.1' } } },
-    comparison: 'ahead', newAdvisories: [], oldAdvisories: [{ ghsa_id: 'GHSA-test-test-test', withdrawn_at: null }],
+    comparison: 'ahead', mainSha: 'base', newAdvisories: [], oldAdvisories: [{ ghsa_id: 'GHSA-test-test-test', withdrawn_at: null }],
   };
   const writes = [], messages = [], failures = [];
   const method = (name) => Object.assign(() => {}, { id: name });
   const github = { rest: {
     repos: {
+      getBranch: async () => ({ data: { commit: { sha: data.mainSha } } }),
       compareCommitsWithBasehead: async () => ({ data: { status: data.comparison } }),
       getContent: async ({ ref }) => ({ data: { type: 'file', encoding: 'base64', content: Buffer.from(JSON.stringify(ref === 'base' ? data.old : data.next)).toString('base64') } }),
       getCombinedStatusForRef: async () => ({ data: { statuses: data.statuses } }),
@@ -82,6 +83,7 @@ for (const [name, mutate] of [
   ['conflict', (f) => { f.pr.mergeable = false; }],
   ['unknown mergeability', (f) => { f.pr.mergeable = null; }],
   ['stale base', (f) => { f.data.comparison = 'diverged'; }],
+  ['stale PR base snapshot', (f) => { f.data.mainSha = 'new-main'; }],
   ['human commit', (f) => { f.data.commits[0].author.login = 'human'; }],
   ['unverified commit', (f) => { f.data.commits[0].commit.verification.verified = false; }],
   ['non-GitHub signer', (f) => { f.data.commits[0].committer.login = 'human'; }],
@@ -141,6 +143,14 @@ test('a commit pushed during the approval request revokes the new review', async
   f.github.rest.pulls.get = async () => { const pr = structuredClone(f.pr); if (++calls > 2) pr.head.sha = 'changed'; return { data: pr }; };
   await f.run();
   assert.deepEqual(f.writes.map((w) => w.method), ['approve', 'dismiss']);
+});
+test('main moves while PR base metadata stays unchanged', async () => {
+  for (const moveAt of [2, 3]) {
+    const f = fixture(); let calls = 0;
+    f.github.rest.repos.getBranch = async () => ({ data: { commit: { sha: ++calls >= moveAt ? 'new-main' : 'base' } } });
+    await f.run();
+    assert.deepEqual(f.writes.map((w) => w.method), moveAt === 2 ? [] : ['approve', 'dismiss']);
+  }
 });
 test('stale automatic approval is revoked when head changes and CI fails', async () => {
   const f = fixture();
