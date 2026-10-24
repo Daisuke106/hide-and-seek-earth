@@ -1,0 +1,53 @@
+# Vercel Speed Insights Implementation
+
+Successfully installed and configured Vercel Speed Insights for this React + Vite project.
+
+## What Was Implemented
+
+### 1. Package Installation
+- Installed `@vercel/speed-insights` version 2.0.0 using npm
+- Updated package.json and package-lock.json with the new dependency
+
+### 2. Speed Insights Integration
+- Added the SpeedInsights component import to `src/App.tsx`
+- Integrated the `<SpeedInsights />` component inside the main App component
+- Placed the component at the root level to track all routes (/, /game, /leaderboard)
+
+### 3. Test Configuration
+- Created a Jest mock at `src/__mocks__/@vercel/speed-insights.tsx` to handle ESM module imports in test environment
+- Updated Jest configuration in package.json to map `@vercel/speed-insights/react` to the mock
+- This ensures all tests pass without requiring the actual Speed Insights component to run during testing
+
+## Files Modified
+
+### Created:
+- `src/__mocks__/@vercel/speed-insights.tsx` - Mock for Jest tests
+
+### Modified:
+- `src/App.tsx` - Added SpeedInsights component import and integration
+- `package.json` - Added @vercel/speed-insights dependency and Jest moduleNameMapper configuration
+- `package-lock.json` - Updated with new dependency resolution
+
+## Implementation Details
+
+The implementation follows the official Vercel Speed Insights documentation (fetched from https://vercel.com/docs/speed-insights/quickstart):
+
+1. The SpeedInsights component is imported from `@vercel/speed-insights/react`
+2. The component is placed inside the main App component to track all page views
+3. No additional configuration is needed - the component will automatically collect and send performance metrics when deployed to Vercel
+
+## Testing & Verification
+
+✅ Build verification: `npm run build` - Successful
+✅ Linter check: `npm run lint` - No new errors (only pre-existing warning in mock file)
+✅ Test suite: `npm test` - All 31 tests passing (4 test suites)
+
+## Next Steps
+
+After deploying to Vercel:
+1. The SpeedInsights component will automatically inject the tracking script
+2. Performance metrics will be collected from real user visits
+3. Data will be visible in the Vercel dashboard under Speed Insights
+4. The script will appear in the page's head as `/<unique-path>/script.js`
+
+The implementation is production-ready and will activate automatically upon Vercel deployment.
