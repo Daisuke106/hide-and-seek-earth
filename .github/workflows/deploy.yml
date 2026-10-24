@@ -21,8 +21,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
       actions: read
     outputs:
       environment: ${{ steps.policy.outputs.environment }}
@@ -32,6 +32,14 @@ jobs:
         with:
           ref: ${{ github.sha }}
           persist-credentials: false
+      - name: Acknowledge deployment request
+        continue-on-error: true
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
+            const status = await notify({ github, context, phase: 'received', warn: core.warning });
+            if (status.body) await core.summary.addRaw(status.body).write();
       - name: Verify actor, merge SHA and latest CI
         id: policy
         uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
@@ -41,6 +49,14 @@ jobs:
             const result = await authorize({ github, context });
             core.setOutput('environment', result.environment);
             core.setOutput('sha', result.sha);
+      - name: Report pre-deployment verification
+        continue-on-error: true
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
+            const status = await notify({ github, context, phase: 'testing', warn: core.warning });
+            if (status.body) await core.summary.addRaw(status.body).write();
 
   test:
     name: Verify deployment code
@@ -59,6 +75,7 @@ jobs:
           cache: npm
           cache-dependency-path: hns-frontend/package-lock.json
       - run: node --test scripts/tests/vercel-deploy.test.cjs
+      - run: node --test scripts/tests/vercel-deploy-feedback.test.cjs
       - run: npm ci
         working-directory: hns-frontend
       - run: npm audit --audit-level=moderate
@@ -74,12 +91,15 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: read
-      issues: read
+      pull-requests: write
+      issues: write
       actions: read
     environment:
       name: ${{ needs.authorize.outputs.environment }}
       url: ${{ steps.deploy.outputs.url }}
+    outputs:
+      deployment_url: ${{ steps.deploy.outputs.url }}
+      missing_settings: ${{ steps.settings.outputs.missing }}
     # rootDirectory=hns-frontend is applied by Vercel. CLI runs at repo root.
     defaults:
       run:
@@ -92,6 +112,7 @@ jobs:
       DEPLOY_APP_ORIGIN: ${{ vars.DEPLOY_APP_ORIGIN }}
       DEPLOY_SHA: ${{ needs.authorize.outputs.sha }}
       TARGET: ${{ needs.authorize.outputs.environment == 'production' && 'production' || 'preview' }}
+      DEPLOY_ENVIRONMENT: ${{ needs.authorize.outputs.environment }}
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
         with:
@@ -106,14 +127,27 @@ jobs:
           script: |
             await require('./scripts/vercel-deploy-policy.cjs').authorize({ github, context });
       - name: Validate connection settings
-        shell: bash
-        run: |
-          for name in VERCEL_ORG_ID VERCEL_PROJECT_ID VERCEL_TOKEN DEPLOY_API_URL DEPLOY_APP_ORIGIN; do
-            if [[ -z "${!name}" ]]; then
-              echo "::error::$name is required. See docs/vercel-deployment.md."
-              exit 1
-            fi
-          done
+        id: settings
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { missingSettings, settingsMessage } = require('./scripts/vercel-deploy-feedback.cjs');
+            const missing = missingSettings(process.env);
+            core.setOutput('missing', missing.join(','));
+            if (missing.length) {
+              const repoUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}`;
+              const message = settingsMessage(missing, process.env.DEPLOY_ENVIRONMENT, repoUrl);
+              await core.summary.addRaw(message).write();
+              core.setFailed(message);
+            }
+      - name: Report deployment started
+        continue-on-error: true
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
+            const status = await notify({ github, context, phase: 'deploying', warn: core.warning });
+            if (status.body) await core.summary.addRaw(status.body).write();
       - name: Install pinned Vercel CLI
         run: npm install --global vercel@65.2.0 --ignore-scripts
       - name: Pull reviewed environment
@@ -147,6 +181,16 @@ jobs:
             exit 1
           fi
           echo "url=$url" >> "$GITHUB_OUTPUT"
+      - name: Report candidate verification
+        continue-on-error: true
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
+        with:
+          script: |
+            const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
+            const status = await notify({ github, context, phase: 'verifying', deploymentUrl: process.env.DEPLOYMENT_URL, warn: core.warning });
+            if (status.body) await core.summary.addRaw(status.body).write();
       - name: Verify candidate routes, assets, security headers and API CORS
         env:
           DEPLOYMENT_URL: ${{ steps.deploy.outputs.url }}
@@ -178,16 +222,26 @@ jobs:
     if: always() && github.event.issue.pull_request && startsWith(github.event.comment.body, '/deploy ')
     runs-on: ubuntu-latest
     permissions:
+      contents: read
+      pull-requests: write
       issues: write
     steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
       - uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
         env:
           AUTH_RESULT: ${{ needs.authorize.result }}
           TEST_RESULT: ${{ needs.test.result }}
           DEPLOY_RESULT: ${{ needs.deploy.result }}
+          DEPLOYMENT_URL: ${{ needs.deploy.outputs.deployment_url }}
+          MISSING_SETTINGS: ${{ needs.deploy.outputs.missing_settings }}
         with:
           script: |
-            const ok = ['AUTH_RESULT', 'TEST_RESULT', 'DEPLOY_RESULT'].every(k => process.env[k] === 'success');
-            const url = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
-            await github.rest.issues.createComment({ ...context.repo, issue_number: context.issue.number,
-              body: `${ok ? 'デプロイと検証が完了しました。' : 'デプロイ要求は完了していません。権限・対象SHA・CI・設定・検証結果を確認してください。'}\n\n[実行結果](${url})` });
+            const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
+            const status = await notify({ github, context, phase: 'complete', warn: core.warning,
+              results: { authorize: process.env.AUTH_RESULT, test: process.env.TEST_RESULT, deploy: process.env.DEPLOY_RESULT },
+              missing: (process.env.MISSING_SETTINGS || '').split(',').filter(Boolean),
+              deploymentUrl: process.env.DEPLOYMENT_URL });
+            if (status.body) await core.summary.addRaw(status.body).write();

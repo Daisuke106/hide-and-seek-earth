@@ -59,16 +59,21 @@ async function request(url, options = {}, fetcher = fetch) {
   if (!response.ok) throw new Error(`Deployment check failed (HTTP ${response.status})`);
   return response;
 }
-async function probeApi(api, origin, fetcher = fetch) {
+async function probeApiReads(api, origin, fetcher = fetch) {
   publicUrl(api, 'API');
-  publicUrl(origin, 'Origin', true);
+  if (origin) publicUrl(origin, 'Origin', true);
   for (const endpoint of ['health', 'characters', 'game-sessions/leaderboard']) {
-    const response = await request(`${api}/${endpoint}`, { headers: { Origin: origin, Accept: 'application/json' } }, fetcher);
+    const response = await request(`${api}/${endpoint}`, { headers: { ...(origin ? { Origin: origin } : {}), Accept: 'application/json' } }, fetcher);
     if (!response.headers.get('content-type')?.includes('application/json')) throw new Error('API must return JSON');
     const data = await response.json();
     if (endpoint === 'health' ? data.status !== 'ok' : !Array.isArray(data) && !Array.isArray(data.data)) throw new Error('API response shape is invalid');
-    if (response.headers.get('access-control-allow-origin') !== origin) throw new Error('API CORS must explicitly allow the deployed origin');
+    if (origin && response.headers.get('access-control-allow-origin') !== origin) throw new Error('API CORS must explicitly allow the deployed origin');
   }
+}
+
+async function probeApi(api, origin, fetcher = fetch) {
+  publicUrl(origin, 'Origin', true);
+  await probeApiReads(api, origin, fetcher);
   const preflight = await request(`${api}/game-sessions`, {
     method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' },
   }, fetcher);
@@ -82,7 +87,7 @@ async function preflight(mode, processEnv = process.env) {
   if (config.git?.deploymentEnabled !== false) throw new Error('Vercel automatic Git deployments must be disabled');
   const env = parseEnv(readFileSync(`.vercel/.env.${processEnv.TARGET}.local`, 'utf8'));
   const api = validateEnvironment(env, processEnv.DEPLOY_API_URL);
-  const origin = publicUrl(processEnv.DEPLOY_APP_ORIGIN, 'DEPLOY_APP_ORIGIN', true).origin;
+  const origin = reviewedOrigin(processEnv);
   const response = await request(`https://api.vercel.com/v9/projects/${encodeURIComponent(processEnv.VERCEL_PROJECT_ID)}?teamId=${encodeURIComponent(processEnv.VERCEL_ORG_ID)}`, {
     headers: { Authorization: `Bearer ${processEnv.VERCEL_TOKEN}` },
   });
@@ -98,8 +103,16 @@ async function preflight(mode, processEnv = process.env) {
     const previous = Buffer.from(before.hash, 'hex');
     if (previous.length !== hash.length || !timingSafeEqual(previous, hash) || before.sha !== processEnv.DEPLOY_SHA) throw new Error('Reviewed Vercel environment/settings changed during the build');
   }
-  await probeApi(api.href, origin);
-  console.log('PASS: Vercel project, public variables, API reads and CORS');
+  if (origin) await probeApi(api.href, origin);
+  else await probeApiReads(api.href);
+  console.log(origin ? 'PASS: Vercel project, public variables, API reads and CORS' :
+    'PASS: Vercel project, public variables and API reads; staging candidate CORS must pass after upload');
+}
+
+function reviewedOrigin(env) {
+  if (env.DEPLOY_APP_ORIGIN?.trim()) return publicUrl(env.DEPLOY_APP_ORIGIN, 'DEPLOY_APP_ORIGIN', true).origin;
+  if (env.TARGET === 'preview' && env.DEPLOY_ENVIRONMENT === 'staging') return null;
+  throw new Error('DEPLOY_APP_ORIGIN is required for production');
 }
 
 if (require.main === module) preflight(process.argv[2]).catch(() => {
@@ -107,4 +120,4 @@ if (require.main === module) preflight(process.argv[2]).catch(() => {
   console.error('Vercel preflight failed. Check project settings, environment variables, API health and CORS using docs/vercel-deployment.md.');
   process.exitCode = 1;
 });
-module.exports = { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi, request };
+module.exports = { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi, probeApiReads, reviewedOrigin, request };

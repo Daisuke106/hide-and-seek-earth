@@ -30,13 +30,47 @@ push・マージ・タグ作成・Actionsの手動実行では公開しません
    - `VERCEL_ORG_ID`: VercelのTeam ID（個人アカウントも対象チームのID）。
    - `VERCEL_PROJECT_ID`: Project Settingsに表示されるProject ID。
    - `DEPLOY_API_URL`: この環境で承認した公開Laravel API URL。Vercelの `REACT_APP_API_URL` と完全一致させ、末尾を `/api` にします。
-   - `DEPLOY_APP_ORIGIN`: この環境で確認するフロントエンドのHTTPS Origin（パスなし）。productionは `https://hide-and-seek-earth.vercel.app`、stagingは検証用Originを指定します。
+   - `DEPLOY_APP_ORIGIN`: productionは `https://hide-and-seek-earth.vercel.app` を指定します（パス・末尾の `/` なし）。stagingは既存の検証用Originがあれば指定し、初回は未設定でも構いません。作成した候補の実際のOriginでCORSを検証します。
 6. 各EnvironmentのSecretsに `VERCEL_TOKEN` を登録します。VercelのAccount Settings → Tokensで、対象チームに権限のあるトークンを発行します。チャットやリポジトリには貼り付けません。
 7. PreviewがDeployment Protectionで保護されている場合は、VercelのProtection Bypass for Automationを設定し、その値をGitHubの同じEnvironmentのSecret `VERCEL_AUTOMATION_BYPASS_SECRET` に登録します。未登録の保護ページは疎通確認に失敗します。閲覧する人にもVercel側のアクセス権が必要です。
 8. 以下の確認項目を完了し、mainへのマージ後にPRコメントから要求します。
 
 VercelからのGit自動デプロイは `git.deploymentEnabled: false` で停止し、GitHub Actionsの検証後に公開します。初回Importで設定前のデプロイが作られても、以降の公開はActionsを利用します。
 IDはリポジトリのルートで `vercel link` を実行した場合の `.vercel/project.json` でも確認できます。このディレクトリはGit管理対象外です。
+
+### 4つのEnvironment variablesの確認・登録方法
+
+登録先はGitHubのリポジトリのSettings → Environments → stagingまたはproduction →
+Environment variables → Add environment variableです。VercelのEnvironment Variablesとは別の設定です。
+各項目のNameとValueを分けて入力します。
+
+| Name | 確認場所・Value |
+| --- | --- |
+| `VERCEL_ORG_ID` | Vercelで対象チームを選択 → Settings → General → Team IDをコピー。チーム名やURLのスラッグではなく `team_...` のIDを使います。 |
+| `VERCEL_PROJECT_ID` | Vercelで対象プロジェクト → Settings → General → Project IDをコピー。`prj_...` の値です。 |
+| `DEPLOY_API_URL` | Vercelの対象環境の `REACT_APP_API_URL` と同じ値。Laravel CloudのHTTPS URLに `/api` を付け、末尾の `/` は付けません。 |
+| `DEPLOY_APP_ORIGIN` | ブラウザで検証するReact画面のURLの `https://ホスト名` 部分。productionでは必須、stagingでは任意です。`/game` や末尾の `/` は含めません。APIのURLは指定しません。 |
+
+同一Vercelプロジェクトを使う場合、Team IDとProject IDはstagingとproductionで同じです。
+API URLは、それぞれのVercel環境で承認した値に合わせます。検証用APIを用意する場合は
+stagingの `DEPLOY_API_URL` とVercel Previewの `REACT_APP_API_URL` を両方変更します。
+stagingのOriginは既存の検証用画面がある場合だけ登録します。まだない場合は未登録にし、
+最初にAPIの読み取りを確認し、候補URLの発行後にその実際のOriginでGET・POSTのCORSを検証します。
+この候補の検証は省略されず、失敗した場合はデプロイ成功と扱いません。productionのOriginは必須です。
+このOriginはAPIのCORS確認に使われ、Vercelの公開ドメインを作成する設定ではありません。
+
+### 要求受付・進行状況・結果のPR通知
+
+権限のあるユーザーが `/deploy ...` を新規投稿すると、要求コメントへ👀を付け、Actionsへの
+リンク付きで受付・テスト中・デプロイ開始・公開候補の検証中を1つのPRコメントに順次反映します。
+成功時は👍、失敗時は😕へ切り替えます。未完了の段階で成功とは表示しません。
+通知は `pull-requests: write` と `issues: write` を持つジョブが実行します。
+GitHub側の権限制約等で通知できない場合も、トークンやAPIエラー本文は出さず、ActionsのSummaryに
+状態とリンクを残します。デプロイの成功・失敗判定を通知失敗で変更しません。
+
+接続設定が不足した場合は、足りない変数・Secretの名前をまとめて表示します。
+`VERCEL_TOKEN` はEnvironment secretsへ登録します。4つの変数を追加してもトークンが未登録なら
+デプロイは停止します。新規コメントの代わりに過去のコメントを編集しても再実行されません。
 
 ## 確認してからコマンドで公開する
 
@@ -72,7 +106,7 @@ GitHubのEnvironmentに設定したRequired reviewers等の保護ルールも適
 - npm監査（moderate以上を拒否）、フロントエンドテスト、ツールチェーン検証とデプロイ制御のテストを再実行します。
 - Vercel APIでチーム・プロジェクトID、Root Directory、Vite、Node 22.xとDeploy Hooksの有無を確認します。
 - API URLの承認値との一致、Mapsキーの形式、未知のブラウザ公開変数、デバッグ設定を検証します。環境変数や主要プロジェクト設定がビルド中に変わった場合は停止します。
-- APIのhealth・characters・leaderboardのJSON応答とPOST用CORS preflightを確認します。DBに読み取りを行うcharacters等も確認し、healthの固定文字列だけでDB正常と判定しません。検証中にデータを書き換えません。
+- APIのhealth・characters・leaderboardのJSON応答を確認します。Origin設定時はPOST用CORS preflightも確認します。stagingのOrigin未設定時も、候補URL発行後のCORS検証は必須です。DBに読み取りを行うcharacters等も確認し、healthの固定文字列だけでDB正常と判定しません。検証中にデータを書き換えません。
 - 公開候補のトップ・game・leaderboard、JavaScriptの配信、セキュリティヘッダー、候補URLからAPIへのCORSを確認します。
 - 本番も最初は `--prod --skip-domain` で候補だけ作成し、上記検証と最終確認に成功してから `vercel promote` で本番ドメインへ切り替えます。候補の検証に失敗した場合、本番ドメインは切り替えません。
 
@@ -96,7 +130,7 @@ ActionsのAPI設定検証もルートの `.vercel/` を読み、`deploy --prebui
 stagingは毎回発行されるPreview URLです。固定の独自ドメインが必要な場合は、Vercelで所有ドメインを設定し、Previewへのalias管理を別途追加してください。
 公開候補の自動検証範囲は上記のとおりです。ブラウザ操作とGoogle Mapsの実表示確認は、本番コマンドを投稿する前に人が行います。
 
-Laravel側は、`DEPLOY_APP_ORIGIN` と実際の候補URLのOriginをCORSで明示的に許可してください（`*` は検証で拒否します）。Preview URLが毎回変わるため、管理するプロジェクトの候補Originだけを返すCORS設定が必要です。本番とstagingでDB・認証情報を分離します。
+Laravel側は、`DEPLOY_APP_ORIGIN` を指定した場合はそのOriginと、実際の候補URLのOriginをCORSで明示的に許可してください（`*` は検証で拒否します）。Preview URLが毎回変わるため、管理するプロジェクトの候補Originだけを返すCORS設定が必要です。本番とstagingでDB・認証情報を分離します。
 API未公開の段階では完全なゲーム動作は確認できません。Actionsは未設定・localhost・HTTPのAPI URLを拒否します。
 React Routerの直接アクセスは `vercel.json` のSPA rewriteで処理します。`/api` はLaravelへ中継しないため、APIは設定した別Originを利用します。
 
