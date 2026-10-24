@@ -12,8 +12,8 @@ updates:
     assignees:
       - "Daisuke106"
     commit-message:
-      prefix: "composer"
-      prefix-development: "composer-dev"
+      prefix: "依存関係更新(PHP)"
+      prefix-development: "開発依存関係更新(PHP)"
       include: "scope"
     labels:
       - "dependencies"
@@ -48,8 +48,8 @@ updates:
     assignees:
       - "Daisuke106"
     commit-message:
-      prefix: "npm"
-      prefix-development: "npm-dev"
+      prefix: "依存関係更新(フロントエンド)"
+      prefix-development: "開発依存関係更新(フロントエンド)"
       include: "scope"
     labels:
       - "dependencies"
@@ -95,7 +95,7 @@ updates:
       timezone: "Asia/Tokyo"
     open-pull-requests-limit: 2
     commit-message:
-      prefix: "ci"
+      prefix: "依存関係更新(CI)"
       include: "scope"
     labels:
       - "dependencies"
