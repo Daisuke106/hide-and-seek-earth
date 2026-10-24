@@ -13,6 +13,7 @@
     "@types/node": "^24.3.0",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@vercel/analytics": "^2.0.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "react-router-dom": "^7.18.4",
@@ -67,6 +68,7 @@
   "jest": {
     "moduleNameMapper": {
       "^react-router-dom$": "<rootDir>/src/__mocks__/react-router-dom.tsx",
+      "^@vercel/analytics/react$": "<rootDir>/src/__mocks__/@vercel/analytics.tsx",
       "\\.(css|less|scss|sass)$": "<rootDir>/test/styleMock.cjs",
       "\\.(png|jpg|jpeg|gif|svg|ico)$": "<rootDir>/test/fileMock.cjs"
     },
