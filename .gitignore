@@ -39,3 +39,6 @@ Thumbs.db
 /hns-frontend/yarn-debug.log*
 /hns-frontend/yarn-error.log*
 /hns-frontend/yarn.lock
+
+# Vercel project links, downloaded environment variables and build output
+.vercel/
