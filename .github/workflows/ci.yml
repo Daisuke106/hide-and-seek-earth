@@ -7,7 +7,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  PHP_VERSION: '8.2'
+  PHP_VERSION: '8.5.12'
   NODE_VERSION: '22'
 
 jobs:
@@ -20,7 +20,7 @@ jobs:
     
     strategy:
       matrix:
-        php: ['8.2', '8.3']
+        php: ['8.5.12']
     
     services:
       mysql:
@@ -68,7 +68,7 @@ jobs:
           DB_DATABASE: database/database.sqlite
 
       - name: Upload coverage reports to Codecov
-        if: matrix.php == '8.2'
+        if: matrix.php == '8.5.12'
         uses: codecov/codecov-action@v5
         with:
           file: ./coverage.xml
@@ -111,6 +111,10 @@ jobs:
       - name: Run ESLint
         working-directory: ./hns-frontend
         run: npm run lint --if-present
+
+      - name: Verify frontend toolchain
+        working-directory: ./hns-frontend
+        run: npm run test:toolchain
 
       - name: Run Prettier check
         working-directory: ./hns-frontend

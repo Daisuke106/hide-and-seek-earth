@@ -1,11 +1,11 @@
-FROM node:20-alpine
+FROM node:22-alpine
 
 WORKDIR /app
 
 # 依存関係のキャッシュ用に先にpackage.jsonをコピー
 COPY hns-frontend/package.json hns-frontend/package-lock.json* ./
 
-RUN npm install
+RUN npm ci
 
 COPY hns-frontend/ .
 
