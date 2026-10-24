@@ -9,7 +9,7 @@ on:
     branches: [ main, develop ]
 
 env:
-  PHP_VERSION: '8.2'
+  PHP_VERSION: '8.5.12'
   NODE_VERSION: '22'
 
 jobs:
@@ -121,7 +121,7 @@ jobs:
         run: composer install --prefer-dist --no-interaction
 
       - name: Run Composer audit
-        run: composer audit --no-dev || echo "Composer audit completed"
+        run: composer audit --no-dev
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
@@ -141,7 +141,7 @@ jobs:
 
       - name: Run NPM audit
         working-directory: ./hns-frontend
-        run: npm audit --audit-level=moderate || echo "NPM audit completed"
+        run: npm audit --audit-level=moderate
 
       - name: Run basic secret scan
         run: |
