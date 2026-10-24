@@ -47,9 +47,11 @@ jobs:
     environment:
       name: ${{ github.event.inputs.environment || 'staging' }}
       url: ${{ steps.deploy.outputs.url }}
+    # The Vercel project applies rootDirectory=hns-frontend itself.
+    # Invoke the CLI from the repository root to avoid doubling that path.
     defaults:
       run:
-        working-directory: hns-frontend
+        working-directory: .
     env:
       VERCEL_ORG_ID: ${{ vars.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ vars.VERCEL_PROJECT_ID }}

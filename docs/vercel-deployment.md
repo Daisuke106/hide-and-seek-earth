@@ -22,7 +22,19 @@ mainへのpushはstaging（Vercel Preview）、手動実行はstaging/production
 8. mainへマージ後、GitHub Actions → Deploy to Vercel → Run workflow → main / stagingを選択します。
 
 VercelからのGit自動デプロイは `git.deploymentEnabled: false` で停止し、GitHub Actionsの検証後に公開します。初回Importで設定前のデプロイが作られても、以降の公開はActionsを利用します。
-IDはローカルで `vercel link` を実行した場合の `.vercel/project.json` でも確認できます。このディレクトリはGit管理対象外です。
+IDはリポジトリのルートで `vercel link` を実行した場合の `.vercel/project.json` でも確認できます。このディレクトリはGit管理対象外です。
+
+## CLIの実行場所と生成ファイル
+
+VercelのRoot Directoryは `hns-frontend` のままにし、`vercel link` / `pull` / `build` / `deploy --prebuilt` はすべてリポジトリのルートから実行します。`cd hns-frontend` して実行すると、設定されたRoot Directoryが再び適用され、`hns-frontend/hns-frontend` を参照して失敗します。
+
+- CLIの接続情報: `<リポジトリ>/.vercel/project.json`
+- `vercel pull` の環境ファイル: `<リポジトリ>/.vercel/.env.preview.local` または `.env.production.local`
+- `vercel build` の公開成果物: `<リポジトリ>/.vercel/output/`
+- アプリの設定: `<リポジトリ>/hns-frontend/vercel.json`
+
+ActionsのAPI設定検証もルートの `.vercel/` を読み、`deploy --prebuilt` は同じ場所の成果物を利用します。npmテストだけは `hns-frontend` で実行します。
+アップロード除外設定 `.vercelignore` もCLIの実行場所であるリポジトリのルートに配置しています。
 
 ## 公開URLと確認範囲
 
@@ -40,3 +52,4 @@ React Routerの直接アクセスは `vercel.json` のSPA rewriteで処理しま
 - https://vercel.com/kb/guide/how-can-i-use-github-actions-with-vercel
 - https://vercel.com/docs/frameworks/frontend/vite
 - https://vercel.com/docs/project-configuration/git-configuration
+- https://vercel.com/docs/monorepos#add-a-monorepo-through-vercel-cli
