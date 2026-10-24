@@ -1,6 +1,8 @@
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
+import { Analytics } from '@vercel/analytics/react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import './index.css';
 import App from './App';
 import reportWebVitals from './reportWebVitals';
@@ -12,6 +14,8 @@ root.render(
   <React.StrictMode>
     <BrowserRouter>
       <App />
+      <Analytics />
+      <SpeedInsights />
     </BrowserRouter>
   </React.StrictMode>
 );
