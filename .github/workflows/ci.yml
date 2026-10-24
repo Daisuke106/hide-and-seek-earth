@@ -116,6 +116,9 @@ jobs:
         working-directory: ./hns-frontend
         run: npm run test:toolchain
 
+      - name: Verify deployment feedback
+        run: node --test scripts/tests/vercel-deploy-feedback.test.cjs
+
       - name: Verify Dependabot Japanese summaries
         run: node --test scripts/tests/dependabot-japanese.test.cjs
 
