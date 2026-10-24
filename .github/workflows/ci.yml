@@ -112,6 +112,10 @@ jobs:
         working-directory: ./hns-frontend
         run: npm run lint --if-present
 
+      - name: Verify frontend toolchain
+        working-directory: ./hns-frontend
+        run: npm run test:toolchain
+
       - name: Run Prettier check
         working-directory: ./hns-frontend
         run: npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,md}"
