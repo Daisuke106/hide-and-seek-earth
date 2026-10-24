@@ -91,7 +91,7 @@ jobs:
 
       - name: Run TypeScript check
         working-directory: ./hns-frontend
-        run: npx tsc --noEmit || echo "TypeScript check completed with warnings"
+        run: npx tsc --noEmit
 
       - name: Run tests
         working-directory: ./hns-frontend
@@ -149,3 +149,15 @@ jobs:
           find . -type f \( -name "*.php" -o -name "*.js" -o -name "*.ts" -o -name "*.json" \) \
             ! -path "./node_modules/*" ! -path "./vendor/*" \
             -exec grep -l "password\|secret\|api.key\|token" {} \; || echo "No obvious secrets found"
+
+  root-npm:
+    name: Root NPM Build and Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+      - run: npm ci
+      - run: npm audit --audit-level=moderate
+      - run: npm run build

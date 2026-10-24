@@ -30,10 +30,10 @@ jobs:
           coverage: none
 
       - name: Install Composer dependencies
-        run: composer install --no-dev --optimize-autoloader
+        run: composer install --no-scripts --no-plugins --prefer-dist --no-interaction
 
       - name: Run security audit
-        run: composer audit --no-dev
+        run: composer audit --locked
 
   npm-security:
     name: NPM Security Audit
