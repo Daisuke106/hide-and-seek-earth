@@ -1,0 +1,62 @@
+name: Dependabot Security Auto Approval
+
+on:
+  workflow_run:
+    workflows: [CI/CD Pipeline, CI Pipeline - Simplified, Security Checks]
+    types: [completed]
+  pull_request_target:
+    types: [opened, reopened, synchronize, ready_for_review]
+  schedule:
+    - cron: '7,27,47 * * * *'
+  workflow_dispatch:
+    inputs:
+      pull_request_number:
+        description: 'PR番号（空欄は全対象）'
+        required: false
+        type: string
+      dry_run:
+        description: '承認・承認取消を行わず判定だけ実行'
+        default: true
+        type: boolean
+
+permissions: {}
+concurrency:
+  group: dependabot-security-auto-approval
+  cancel-in-progress: false
+
+jobs:
+  review:
+    name: Dependabot Security Review
+    if: >-
+      github.event_name != 'pull_request_target' ||
+      (github.event.pull_request.user.login == 'dependabot[bot]' &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      actions: read
+      checks: read
+      statuses: read
+      pull-requests: write
+    steps:
+      # 特権ジョブではPRのhead/merge ref・成果物・キャッシュを読み込まない。
+      - name: Checkout trusted default branch only
+        uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          ref: main
+          persist-credentials: false
+      - name: Verify and approve security fixes
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        env:
+          REVIEW_PR: ${{ inputs.pull_request_number || github.event.pull_request.number }}
+          REVIEW_DRY_RUN: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run }}
+        with:
+          script: |
+            const value = process.env.REVIEW_PR;
+            if (value && !/^[1-9][0-9]*$/.test(value)) throw new Error('Invalid PR number');
+            const { run } = require(`${process.env.GITHUB_WORKSPACE}/scripts/dependabot-security-review.cjs`);
+            await run({ github, context, core,
+              number: value ? Number(value) : undefined,
+              dryRun: process.env.REVIEW_DRY_RUN === 'true',
+            });
