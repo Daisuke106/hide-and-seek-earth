@@ -61,7 +61,7 @@ jobs:
 
       - name: Run security audit
         working-directory: ./hns-frontend
-        run: npm audit --audit-level=moderate || echo "NPM audit found vulnerabilities, but continuing..."
+        run: npm audit --audit-level=moderate
 
 
   php-static-analysis:
@@ -114,7 +114,7 @@ jobs:
         working-directory: ./hns-frontend
         run: |
           echo "Running npm audit for critical vulnerabilities..."
-          npm audit --audit-level=critical || echo "Critical vulnerabilities found, but continuing for now"
+          npm audit --audit-level=critical
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -124,10 +124,10 @@ jobs:
       - name: Install Composer dependencies
         run: composer install --prefer-dist --no-interaction --no-progress --quiet
 
-      - name: Run composer audit (high severity only)
+      - name: Run Composer audit (production dependencies)
         run: |
-          echo "Running composer audit for high severity vulnerabilities..."
-          composer audit --no-dev --format=summary || echo "High severity vulnerabilities found, but continuing for now"
+          echo "Running Composer audit for production dependencies..."
+          composer audit --no-dev --format=summary
 
   secrets-scan:
     name: Secrets Scanning
