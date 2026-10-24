@@ -116,6 +116,9 @@ jobs:
         working-directory: ./hns-frontend
         run: npm run test:toolchain
 
+      - name: Verify Dependabot Japanese summaries
+        run: node --test scripts/tests/dependabot-japanese.test.cjs
+
       - name: Run Prettier check
         working-directory: ./hns-frontend
         run: npx prettier --check "src/**/*.{js,jsx,ts,tsx,json,css,md}"

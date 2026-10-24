@@ -1,0 +1,68 @@
+name: Dependabot PRを日本語で表示
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+permissions: {}
+
+concurrency:
+  group: dependabot-japanese-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  localize:
+    if: >-
+      github.event.pull_request.user.login == 'dependabot[bot]' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      pull-requests: write
+    steps:
+      # PRのコードをcheckoutせず、メタデータのみ編集する。
+      - name: タイトルと冒頭の説明を日本語化
+        uses: actions/github-script@ed597411d8f924073f98dfc5c65a23a2325f34cd # v8
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: context.payload.pull_request.number,
+            });
+            if (pr.state !== 'open' || pr.user.login !== 'dependabot[bot]' ||
+                pr.head.repo?.full_name !== `${owner}/${repo}`) return;
+
+            const body = pr.body || '';
+            const stored = body.match(/^<!-- dependabot-ja:start -->\n<!-- source-title: ([A-Za-z0-9+/=]+) -->/);
+            if (pr.title.startsWith('[依存関係更新]') && !stored) return;
+            const sourceTitle = pr.title.startsWith('[依存関係更新]') && stored
+              ? Buffer.from(stored[1], 'base64').toString('utf8') : pr.title;
+            const text = sourceTitle.replace(/^.*?:\s*(?=bump\b)/i, '');
+            const group = text.match(/^bump the (.+?) group.*?with (\d+) updates?$/i);
+            const single = text.match(/^bump (.+?) from (\S+) to (\S+?)(?: in (.+))?$/i);
+            let summary;
+            if (group) summary = `${group[1]}グループの依存関係${group[2]}件を更新`;
+            else if (single) summary = `${single[1]}を${single[2]}から${single[3]}へ更新${single[4] ? `（${single[4]}）` : ''}`;
+            else summary = '依存関係のバージョンを更新';
+            const title = `[依存関係更新] ${summary}`.slice(0, 240);
+            const original = body.replace(/^<!-- dependabot-ja:start -->[\s\S]*?<!-- dependabot-ja:end -->\n*/, '');
+            const header = [
+              '<!-- dependabot-ja:start -->',
+              `<!-- source-title: ${Buffer.from(sourceTitle).toString('base64')} -->`,
+              '## 更新概要',
+              summary,
+              '',
+              'Dependabotが作成した依存関係更新PRです。変更差分とCI・セキュリティ監査の結果を確認してからマージしてください。',
+              'リリースノート、変更履歴、Dependabot操作コマンドは以下の原文を保持しています。',
+              '<!-- dependabot-ja:end -->',
+              '',
+            ].join('\n');
+            const localizedBody = `${header}\n${original}`;
+            // 長いリリースノートを切り捨てない。上限時はタイトルだけを変更する。
+            const update = { owner, repo, pull_number: pr.number };
+            if (pr.title !== title) update.title = title;
+            if (localizedBody.length <= 65000 && localizedBody !== body) update.body = localizedBody;
+            if (update.title !== undefined || update.body !== undefined) {
+              await github.rest.pulls.update(update);
+            }
