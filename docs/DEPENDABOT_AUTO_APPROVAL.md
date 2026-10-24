@@ -8,7 +8,7 @@ GitHub Actionsのレビューとして承認します。自動マージ・ブラ
 すべて満たした場合だけ、判定したhead SHAを指定して承認します。
 
 1. main宛て・同一リポジトリ・Dependabot作成の非draft PRで、競合がない。
-2. 最新mainを取り込み、全コミットがDependabot作成・GitHub署名検証済みである。
+2. mainブランチの現在のSHAを直接取得してPRのbase SHAと照合し、最新mainを取り込んでいる。全コミットがDependabot作成・GitHub署名検証済みである。
 3. 変更がルート／hns-frontendのpackage.json・package-lock.json、ルートのcomposer.json・composer.lockだけである。
 4. manifest内の変更も依存定義だけである。scripts・設定・PHPスクリプト・ワークフロー等の変更を含めない。
 5. 既存の3ワークフローの**現在のheadに対する最新実行**が成功し、必須ジョブに未実行・スキップがない。
