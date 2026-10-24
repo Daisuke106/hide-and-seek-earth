@@ -1,7 +1,7 @@
 'use strict';
 const { readFileSync, writeFileSync } = require('node:fs');
 const { parseEnv } = require('node:util');
-const { createHash } = require('node:crypto');
+const { randomBytes, scryptSync, timingSafeEqual } = require('node:crypto');
 const { isIP } = require('node:net');
 
 function publicUrl(value, label, originOnly = false) {
@@ -45,10 +45,13 @@ function canonical(value) {
   if (value && typeof value === 'object') return Object.fromEntries(Object.keys(value).sort().map(key => [key, canonical(value[key])]));
   return value;
 }
-function fingerprint(env, settings) {
-  return createHash('sha256').update(JSON.stringify(canonical({
+function fingerprint(env, settings, salt) {
+  if (!Buffer.isBuffer(salt) || salt.length < 32) throw new Error('A random 32-byte review salt is required');
+  // Settings may contain passwordProtection. Use a salted, costly KDF even
+  // though this value is only a transient configuration-change verifier.
+  return scryptSync(JSON.stringify(canonical({
     env: Object.fromEntries(Object.entries(env).filter(([key]) => !key.startsWith('VERCEL_'))), settings,
-  }))).digest('hex');
+  })), salt, 64);
 }
 
 async function request(url, options = {}, fetcher = fetch) {
@@ -84,12 +87,16 @@ async function preflight(mode, processEnv = process.env) {
     headers: { Authorization: `Bearer ${processEnv.VERCEL_TOKEN}` },
   });
   const settings = validateProject(await response.json(), processEnv);
-  const hash = fingerprint(env, settings);
   const file = '.vercel/deploy-review.json';
-  if (mode === 'record') writeFileSync(file, JSON.stringify({ hash, sha: processEnv.DEPLOY_SHA }));
+  if (mode === 'record') {
+    const salt = randomBytes(32);
+    writeFileSync(file, JSON.stringify({ salt: salt.toString('hex'), hash: fingerprint(env, settings, salt).toString('hex'), sha: processEnv.DEPLOY_SHA }), { mode: 0o600 });
+  }
   else {
     const before = JSON.parse(readFileSync(file, 'utf8'));
-    if (before.hash !== hash || before.sha !== processEnv.DEPLOY_SHA) throw new Error('Reviewed Vercel environment/settings changed during the build');
+    const hash = fingerprint(env, settings, Buffer.from(before.salt, 'hex'));
+    const previous = Buffer.from(before.hash, 'hex');
+    if (previous.length !== hash.length || !timingSafeEqual(previous, hash) || before.sha !== processEnv.DEPLOY_SHA) throw new Error('Reviewed Vercel environment/settings changed during the build');
   }
   await probeApi(api.href, origin);
   console.log('PASS: Vercel project, public variables, API reads and CORS');

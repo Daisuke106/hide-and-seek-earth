@@ -1,6 +1,7 @@
 'use strict';
 const { test } = require('node:test');
 const assert = require('node:assert/strict');
+const { randomBytes } = require('node:crypto');
 const { REQUIRED, parseCommand, authorize } = require('../vercel-deploy-policy.cjs');
 const { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi } = require('../vercel-preflight.cjs');
 const { smoke } = require('../vercel-smoke.cjs');
@@ -93,9 +94,12 @@ test('validate actual Vercel project, root, runtime and bypass hooks', () => {
   for (const change of [{ id: 'other' }, { accountId: 'other' }, { rootDirectory: './' }, { nodeVersion: '20.x' }, { link: { deployHooks: [{}] } }]) assert.throws(() => validateProject({ ...project, ...change }, env));
 });
 test('configuration fingerprint ignores ordering and detects public/private setting changes', () => {
-  assert.equal(fingerprint({ a: '1', b: '2' }, {}), fingerprint({ b: '2', a: '1' }, {}));
-  assert.notEqual(fingerprint(publicEnv(), { protection: true }), fingerprint(publicEnv(), { protection: false }));
-  assert.notEqual(fingerprint(publicEnv(), {}), fingerprint({ ...publicEnv(), REACT_APP_GOOGLE_MAPS_API_KEY: 'different' }, {}));
+  const salt = randomBytes(32);
+  assert.deepEqual(fingerprint({ a: '1', b: '2' }, {}, salt), fingerprint({ b: '2', a: '1' }, {}, salt));
+  assert.notDeepEqual(fingerprint(publicEnv(), { protection: true }, salt), fingerprint(publicEnv(), { protection: false }, salt));
+  assert.notDeepEqual(fingerprint(publicEnv(), {}, salt), fingerprint({ ...publicEnv(), REACT_APP_GOOGLE_MAPS_API_KEY: 'different' }, {}, salt));
+  assert.notDeepEqual(fingerprint(publicEnv(), {}, salt), fingerprint(publicEnv(), {}, randomBytes(32)));
+  assert.throws(() => fingerprint(publicEnv(), {}, Buffer.alloc(8)), /salt/);
 });
 
 function apiResponse(url, options, override = {}) {
@@ -116,15 +120,16 @@ test('candidate smoke checks assets and routes, and limits bypass credentials to
   const calls = [];
   const fakeFetch = async (url, options) => {
     url = String(url); calls.push([url, options]);
-    if (url.startsWith(API)) return apiResponse(url, options);
+    if (new URL(url).origin === new URL(API).origin) return apiResponse(url, options);
     return new Response(url.endsWith('.js') ? 'app()' : '<div id="root"></div><script type="module" src="/assets/app.js"></script>', {
       headers: { 'content-type': url.endsWith('.js') ? 'application/javascript' : 'text/html', 'x-content-type-options': 'nosniff' },
     });
   };
   await smoke({ DEPLOYMENT_URL: ORIGIN, BYPASS_SECRET: 'private', DEPLOY_API_URL: API }, fakeFetch);
-  assert.equal(calls.filter(([url]) => url.startsWith(ORIGIN)).length, 6);
-  assert.ok(calls.filter(([url]) => url.startsWith(API)).every(([, options]) => !options.headers['x-vercel-protection-bypass']));
+  assert.equal(calls.filter(([url]) => new URL(url).origin === ORIGIN).length, 6);
+  assert.ok(calls.filter(([url]) => new URL(url).origin === new URL(API).origin).every(([, options]) => !options.headers['x-vercel-protection-bypass']));
   await assert.rejects(smoke({ DEPLOYMENT_URL: 'https://attacker.net' }, fakeFetch));
+  await assert.rejects(smoke({ DEPLOYMENT_URL: `${ORIGIN}.attacker.net` }, fakeFetch), /deployment URL/);
   await assert.rejects(smoke({ DEPLOYMENT_URL: ORIGIN, DEPLOY_API_URL: API }, async () => new Response('<div id="root"></div>', {
     headers: { 'content-type': 'text/html', 'x-content-type-options': 'nosniff' },
   })), /JavaScript/);
