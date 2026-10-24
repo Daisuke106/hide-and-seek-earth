@@ -117,6 +117,13 @@ test('latest workflow rerun takes precedence over previous success', async () =>
   const f = fixture(); f.data.runs.push({ ...f.data.runs[0], id: 100, conclusion: 'failure' });
   assert.ok((await f.evaluate()).reason);
 });
+test('approval does not wait for its own running check; another app cannot spoof it', async () => {
+  const f = fixture();
+  f.data.checks.push({ name: 'Dependabot Security Review', app: { slug: 'github-actions' }, status: 'in_progress' });
+  assert.equal((await f.evaluate()).approved, true);
+  f.data.checks[1].app.slug = 'another-app';
+  assert.ok((await f.evaluate()).reason);
+});
 test('changed head or base during evaluation is never approved', async () => {
   for (const change of ['head', 'base']) {
     const f = fixture(); let calls = 0;

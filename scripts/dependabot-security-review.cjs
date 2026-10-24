@@ -3,6 +3,7 @@
 const MARKER = '<!-- dependabot-security-auto-approval:v1 -->';
 const BOT = 'dependabot[bot]';
 const REVIEWER = 'github-actions[bot]';
+const OWN_CHECK = 'Dependabot Security Review';
 const REQUIRED = {
   '.github/workflows/ci-simple.yml': ['Backend Tests', 'Frontend Tests', 'Basic Security Checks', 'Root NPM Build and Audit'],
   '.github/workflows/ci.yml': ['Backend Tests (PHP 8.5.12)', 'Frontend Tests', 'Code Quality', 'Integration Tests'],
@@ -86,7 +87,8 @@ async function workflowsPassed(github, repo, pr) {
     selected.push(run.id);
   }
   const checks = await github.paginate(github.rest.checks.listForRef, { ...repo, ref: pr.head.sha, filter: 'latest', per_page: 100 });
-  if (checks.some((c) => c.status !== 'completed' || (c.conclusion !== 'success' && !(c.name === 'CodeQL' && c.conclusion === 'neutral')))) return { reason: '追加のチェックが未完了または未成功です' };
+  const external = checks.filter((c) => !(c.name === OWN_CHECK && c.app?.slug === 'github-actions'));
+  if (external.some((c) => c.status !== 'completed' || (c.conclusion !== 'success' && !(c.name === 'CodeQL' && c.conclusion === 'neutral')))) return { reason: '追加のチェックが未完了または未成功です' };
   const { data: status } = await github.rest.repos.getCombinedStatusForRef({ ...repo, ref: pr.head.sha });
   if (status.statuses.some((s) => s.state !== 'success')) return { reason: 'コミットステータスが未成功です' };
   return { runs: selected };
