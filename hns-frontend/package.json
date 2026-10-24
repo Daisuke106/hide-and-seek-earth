@@ -70,6 +70,7 @@
   "jest": {
     "moduleNameMapper": {
       "^react-router-dom$": "<rootDir>/src/__mocks__/react-router-dom.tsx",
+      "^@vercel/speed-insights/react$": "<rootDir>/src/__mocks__/@vercel/speed-insights.tsx",
       "\\.(css|less|scss|sass)$": "<rootDir>/test/styleMock.cjs",
       "\\.(png|jpg|jpeg|gif|svg|ico)$": "<rootDir>/test/fileMock.cjs"
     },
