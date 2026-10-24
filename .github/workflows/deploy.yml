@@ -100,6 +100,7 @@ jobs:
     outputs:
       deployment_url: ${{ steps.deploy.outputs.url }}
       missing_settings: ${{ steps.settings.outputs.missing }}
+      preflight_failure: ${{ steps.preflight.outputs.failure_code || steps.recheck.outputs.failure_code || steps.final_review.outputs.failure_code }}
     # rootDirectory=hns-frontend is applied by Vercel. CLI runs at repo root.
     defaults:
       run:
@@ -153,6 +154,7 @@ jobs:
       - name: Pull reviewed environment
         run: vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
       - name: Check security configuration, public variables and API readiness
+        id: preflight
         run: node scripts/vercel-preflight.cjs record
       - name: Build reviewed commit
         shell: bash
@@ -161,6 +163,7 @@ jobs:
           if [[ "$TARGET" == production ]]; then flags+=(--prod); fi
           vercel build "${flags[@]}" --token="$VERCEL_TOKEN"
       - name: Refresh environment and reject configuration changes
+        id: recheck
         run: |
           vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
           node scripts/vercel-preflight.cjs compare
@@ -197,6 +200,7 @@ jobs:
           BYPASS_SECRET: ${{ secrets.VERCEL_AUTOMATION_BYPASS_SECRET }}
         run: node scripts/vercel-smoke.cjs
       - name: Reject changed environment before promotion
+        id: final_review
         run: |
           vercel pull --yes --environment="$TARGET" --token="$VERCEL_TOKEN"
           node scripts/vercel-preflight.cjs compare
@@ -237,11 +241,13 @@ jobs:
           DEPLOY_RESULT: ${{ needs.deploy.result }}
           DEPLOYMENT_URL: ${{ needs.deploy.outputs.deployment_url }}
           MISSING_SETTINGS: ${{ needs.deploy.outputs.missing_settings }}
+          PREFLIGHT_FAILURE: ${{ needs.deploy.outputs.preflight_failure }}
         with:
           script: |
             const { notify } = require('./scripts/vercel-deploy-feedback.cjs');
             const status = await notify({ github, context, phase: 'complete', warn: core.warning,
               results: { authorize: process.env.AUTH_RESULT, test: process.env.TEST_RESULT, deploy: process.env.DEPLOY_RESULT },
               missing: (process.env.MISSING_SETTINGS || '').split(',').filter(Boolean),
+              failureCode: process.env.PREFLIGHT_FAILURE,
               deploymentUrl: process.env.DEPLOYMENT_URL });
             if (status.body) await core.summary.addRaw(status.body).write();

@@ -72,6 +72,27 @@ GitHub側の権限制約等で通知できない場合も、トークンやAPI�
 `VERCEL_TOKEN` はEnvironment secretsへ登録します。4つの変数を追加してもトークンが未登録なら
 デプロイは停止します。新規コメントの代わりに過去のコメントを編集しても再実行されません。
 
+### Previewの公開変数と検証エラーの確認
+
+GitHub Environmentの変数とVercelの環境変数は別々です。stagingではVercelのPreviewへ、
+productionではProductionへ次の2項目をConfigとして登録してください。
+
+- `REACT_APP_API_URL`: 対応するGitHub Environmentの `DEPLOY_API_URL` と同じLaravel APIのHTTPS URL。
+- `REACT_APP_GOOGLE_MAPS_API_KEY`: Maps JavaScript API用のブラウザキー。Google Cloud側のHTTPリファラー制限に検証用URLも含めます。
+
+Vercelの追加画面で「public framework prefix cannot use visibility: secret」と表示された場合は、
+TypeをSecretからConfigへ変更します。`REACT_APP_` の値はブラウザへ組み込まれる公開情報です。
+Mapsキーはブラウザ用のものを使い、Google Cloud側で利用するAPIとHTTPリファラーを制限します。
+
+Productionだけへ登録した変数は `vercel pull --environment=preview` では取得されません。
+既存変数の適用先にPreviewを追加した後、新しい要求で環境を取得し直します。
+
+公開前検証が失敗した場合は、ActionsのAnnotation・Summary・PRの結果コメントに診断コードと
+修正箇所を表示します。`API_URL_MISSING` は対象環境のAPI URL未登録、`MAPS_KEY_MISSING` は
+Mapsキー未登録、`API_URL_MISMATCH` はGitHubとVercelのURL不一致、`API_CORS_INVALID` は
+Laravel側のOriginまたはPOST許可不足です。認証情報・プロバイダーの生のエラー本文は表示しません。
+Ubuntu runnerの移行通知はこれらの検証エラーとは別です。
+
 ## 確認してからコマンドで公開する
 
 コマンドの `--verified` は、実行者が次を確認したことを表します。単にコマンドへ付ければ自動で証明されるものではありません。

@@ -66,6 +66,15 @@ test('CI rejection reports failure and skipped jobs without a false success', as
   assert.ok(f.state.reactions.some(reaction => reaction.content === 'confused'));
 });
 
+test('PR status exposes only curated preflight reasons, never arbitrary failure text', async () => {
+  const f = fixture();
+  await notify({ ...f, phase: 'complete', results: { authorize: 'success', test: 'success', deploy: 'failure' }, failureCode: 'MAPS_KEY_MISSING' });
+  assert.match(f.state.comments[0].body, /MAPS_KEY_MISSING/);
+  assert.match(f.state.comments[0].body, /Preview/);
+  const unsafe = renderStatus(f.context, 'complete', { deploy: 'failure' }, [], undefined, 'token=private-value');
+  assert.doesNotMatch(unsafe.body, /private-value/);
+});
+
 test('missing settings reports every name, distinguishes variables from secrets, never their values', () => {
   const env = { VERCEL_PROJECT_ID: 'prj_private', VERCEL_TOKEN: 'sensitive-token', DEPLOY_API_URL: ' ' };
   assert.deepEqual(missingSettings(env), ['VERCEL_ORG_ID', 'DEPLOY_API_URL', 'DEPLOY_APP_ORIGIN']);

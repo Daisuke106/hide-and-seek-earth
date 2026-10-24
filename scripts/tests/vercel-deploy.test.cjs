@@ -5,6 +5,11 @@ const { randomBytes } = require('node:crypto');
 const { REQUIRED, parseCommand, authorize } = require('../vercel-deploy-policy.cjs');
 const { publicUrl, validateEnvironment, validateProject, fingerprint, probeApi } = require('../vercel-preflight.cjs');
 const { smoke } = require('../vercel-smoke.cjs');
+const { diagnoseFailure, reportFailure } = require('../vercel-preflight.cjs');
+const { mkdtempSync, mkdirSync, writeFileSync, readFileSync, rmSync } = require('node:fs');
+const { tmpdir } = require('node:os');
+const { join, resolve, basename } = require('node:path');
+const { spawnSync } = require('node:child_process');
 
 const SHA = 'a'.repeat(40);
 function fixture(environment = 'staging') {
@@ -75,6 +80,52 @@ test('production requires staging completion before the human production command
 const API = 'https://api.hide-and-seek-earth.net/api';
 const ORIGIN = 'https://hide-and-seek-earth.vercel.app';
 const publicEnv = () => ({ REACT_APP_API_URL: API, REACT_APP_GOOGLE_MAPS_API_KEY: 'AIza' + 'x'.repeat(35) });
+
+test('missing Preview API and Maps variables have distinct actionable diagnoses', () => {
+  for (const [env, expected] of [[{}, 'API_URL_MISSING'], [{ REACT_APP_API_URL: API }, 'MAPS_KEY_MISSING'],
+    [{ ...publicEnv(), REACT_APP_API_URL: 'https://different.net/api' }, 'API_URL_MISMATCH']]) {
+    let caught;
+    try { validateEnvironment(env, API); } catch (error) { caught = error; }
+    assert.equal(diagnoseFailure(caught).code, expected);
+    assert.match(diagnoseFailure(caught).message, /Vercel/);
+  }
+});
+
+test('diagnostics write a safe annotation, output and Summary without provider errors or secret values', () => {
+  const logs = [], files = new Map();
+  const error = Object.assign(new Error('token=private-provider-value\n::error::unsafe'), { preflightCode: 'unknown-secret-value' });
+  const result = reportFailure(error, { GITHUB_OUTPUT: 'output', GITHUB_STEP_SUMMARY: 'summary' },
+    message => logs.push(message), (file, content) => files.set(file, content));
+  assert.equal(result.code, 'PREFLIGHT_FAILED');
+  assert.equal(files.get('output'), 'failure_code=PREFLIGHT_FAILED\n');
+  assert.match(files.get('summary'), /PREFLIGHT_FAILED/);
+  assert.doesNotMatch(logs.join('\n') + files.get('summary'), /private-provider-value|unknown-secret-value|unsafe/);
+  assert.equal(diagnoseFailure(new Error('Deployment check failed (HTTP 403)')).code, 'ACCESS_DENIED');
+  assert.equal(diagnoseFailure(new Error('API POST/CORS preflight failed')).code, 'API_CORS_INVALID');
+});
+
+test('CLI reproduces the empty Preview file failure and emits a useful reason before any network request', t => {
+  const testDir = mkdtempSync(join(tmpdir(), 'hns-preflight-'));
+  t.after(() => {
+    assert.ok(resolve(testDir).startsWith(resolve(tmpdir()) + require('node:path').sep));
+    assert.ok(basename(testDir).startsWith('hns-preflight-'));
+    rmSync(testDir, { recursive: true, force: true });
+  });
+  mkdirSync(join(testDir, 'hns-frontend'));
+  mkdirSync(join(testDir, '.vercel'));
+  writeFileSync(join(testDir, 'hns-frontend/vercel.json'), JSON.stringify({ git: { deploymentEnabled: false } }));
+  writeFileSync(join(testDir, '.vercel/.env.preview.local'), 'VERCEL_TOKEN=private-test-value\n');
+  const output = join(testDir, 'output'), summary = join(testDir, 'summary');
+  const result = spawnSync(process.execPath, [resolve(__dirname, '../vercel-preflight.cjs'), 'record'], {
+    cwd: testDir, encoding: 'utf8', env: { ...process.env, TARGET: 'preview', DEPLOY_ENVIRONMENT: 'staging',
+      GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: summary, DEPLOY_API_URL: API },
+  });
+  assert.equal(result.status, 1);
+  assert.match(result.stderr, /API_URL_MISSING.*Preview/);
+  assert.doesNotMatch(result.stderr, /private-test-value/);
+  assert.equal(readFileSync(output, 'utf8'), 'failure_code=API_URL_MISSING\n');
+  assert.match(readFileSync(summary, 'utf8'), /REACT_APP_API_URL/);
+});
 test('require reviewed API, Maps key, and a strict browser-variable allowlist', () => {
   assert.equal(validateEnvironment(publicEnv(), API).href, API);
   for (const env of [ { ...publicEnv(), REACT_APP_API_URL: 'http://localhost:8000/api' },
